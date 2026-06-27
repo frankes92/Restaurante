@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
+    <ext:UBLExtensions>
+        <ext:UBLExtension>
+            <ext:ExtensionContent><ds:Signature Id="SignatureSP"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><ds:Reference URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><ds:DigestValue>V0xVm83KrnYgADDpFGguWdbq6m4=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>s155TdKfl1P2MZyh+w73yguC+IH91a4jeQaQO1DXuqBHu8P2mPrERwif+y4OYSsCC55Ilk+zw4HCh2iUO9tV0n3nS/YthuUyLCf9s4LM25KBtgVL5TVWsQGId0b5hhNbbIJ9H20Y0t1h94hpDGdpI5dhr9+AiK7bT4rqkCd0TPQDLxKQ0e2sLJMAyKfMlbzmbZiliPek27ilWeIKer1R2xelgVdu7EGEsInk8EaS1dn2Y3QF3tYuYIRigzHTUQ+OygGcBhLYkdMRLnBW2LLUZDuDzdf2YeWhy3CmFbH29pxtbH+790tNYUr6dmCjHeKUI9S841XMOJpKjoFLo3DW4Q==</ds:SignatureValue><ds:KeyInfo><ds:X509Data><ds:X509Certificate>MIIFijCCBHKgAwIBAgIIIcOgr8bzLjcwDQYJKoZIhvcNAQELBQAwRjEkMCIGA1UEAwwbTGxhbWEucGUgU0hBMjU2IFN0YW5kYXJkIENBMREwDwYDVQQKDAhMTEFNQS5QRTELMAkGA1UEBhMCUEUwHhcNMjYwNTEyMTgyNDE4WhcNMjcwNTEyMTgyNDAwWjCCASIxKjAoBgNVBAkMIUFWLiBMTE9RVUUgWVVQQU5RVUkgTVogMzEgTE9URSAxMDEwMC4GCSqGSIb3DQEJARYhY2V2aWNoZXJpYXlhcGV6Lm9maWNpYWxAZ21haWwuY29tMSwwKgYDVQQDDCNTT0ZUV0FSRSBERSBGQUNUVVJBQ0lPTiBFTEVDVFJPTklDQTEsMCoGA1UECwwjRkFDVFVSQSBFTEVDVFJPTklDQSBSVUMgMTA3MjExMDkyOTcxITAfBgNVBAsMGFZhbGlkYWRvIHBvciBMbGFtYS5wZSBFUjEkMCIGA1UECgwbRE9NSU5HVUVaIENFUk9OIEdFSVNFTiBMVUlTMRAwDgYDVQQHDAdVQ0FZQUxJMQswCQYDVQQGEwJQRTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMrFibgZJz5PUJ7xeMI1oVfAMZtZ6rcAdrGd1xy63c/8is6j5MXeGy+7UWrEYakhHrGsvfveLd10hKGDBa6t1vLhaFECAJEDV5UPaADF9UguzZjtBH0D7OKw5Pvi5xzyV621SviHkrJFs7/5FvGH1p0JOJnYsXjQdAcn/ehf95/BevQaVXz1ERlELTIQDhDs+ck3nwFOmkUQlE996EJa7bS0/FVIotr/+HrhZAr0tpHfWvFaAfkXJANm9rCi7BJnYg8iMOuGuvqO/gqVn2R/wPAn49laI6a3EdkbvEGksi1PIh9yGA+P7oscux6Er76K5g+miYs8eVOlb5obFSil5QkCAwEAAaOCAZwwggGYMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUXYhbretl+/5oouTZbz1XcqLvK5kwZwYIKwYBBQUHAQEEWzBZMDUGCCsGAQUFBzAChilodHRwOi8vY3J0LmxsYW1hLnBlL2xsYW1hcGVzdGFuZGFyZGNhLmNlcjAgBggrBgEFBQcwAYYUaHR0cDovL29jc3AubGxhbWEucGUwLAYDVR0RBCUwI4EhY2V2aWNoZXJpYXlhcGV6Lm9maWNpYWxAZ21haWwuY29tMEYGA1UdIAQ/MD0wOwYNKwYBBAGDl3cAAQADATAqMCgGCCsGAQUFBwIBFhxodHRwczovL2xsYW1hLnBlL3JlcG9zaXRvcnkvMB0GA1UdJQQWMBQGCCsGAQUFBwMCBggrBgEFBQcDBDA6BgNVHR8EMzAxMC+gLaArhilodHRwOi8vY3JsLmxsYW1hLnBlL2xsYW1hcGVzdGFuZGFyZGNhLmNybDAdBgNVHQ4EFgQUa/LY6RaW0cjr+65eqJc4X+vStYMwDgYDVR0PAQH/BAQDAgbAMA0GCSqGSIb3DQEBCwUAA4IBAQAOwGIeOfOIaYqoZse+UK8lLxyxX+FjnDyfZANMF8dfZ7EnKs/1n/UHF7CBEl6BU88W6sfM3RevL29dI2TgMlZ/uY3HX/1BIBuN0J1ty5WGCbMYsZl7MQCF7baoE8pDK8WDAqpcEPaq+Dl8ObwLyGc9nY/oFpuvJYe0LrN7hboFoWK1141g2aYnO5f5IUhGD60DkaLPBqpg6+hxJWhuSAKkWNAYXRyWaf706tA12ekjUZF4y51hhxSxdlpNGOxp0ZHnUSln4bxE2y4EwxVaHnnTLI2Rqd/5n9cYK5fraYB4HLUKchdjRUHJSyLDalm1pp1Ohcv8lJenkEIutsPTAYDu</ds:X509Certificate></ds:X509Data></ds:KeyInfo></ds:Signature></ext:ExtensionContent>
+        </ext:UBLExtension>
+    </ext:UBLExtensions>
+    <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
+    <cbc:CustomizationID>2.0</cbc:CustomizationID>
+    <cbc:ID>B001-24</cbc:ID>
+    <cbc:IssueDate>2026-05-14</cbc:IssueDate>
+    <cbc:IssueTime>14:56:29</cbc:IssueTime>
+    <cbc:DueDate>2026-05-14</cbc:DueDate>
+    <cbc:InvoiceTypeCode listID="0101" listAgencyName="PE:SUNAT" listName="Tipo de Documento" listURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo01" name="Tipo de Operacion" listSchemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo51">03</cbc:InvoiceTypeCode>
+    <cbc:Note languageLocaleID="1000"><![CDATA[SON: CINCO CON 00/100 SOLES]]></cbc:Note>
+    <cbc:DocumentCurrencyCode>PEN</cbc:DocumentCurrencyCode>
+
+    <cac:Signature>
+        <cbc:ID>10721109297</cbc:ID>
+        <cbc:Note><![CDATA[CEVICHERIA YAPEZ]]></cbc:Note>
+        <cac:SignatoryParty>
+            <cac:PartyIdentification>
+                <cbc:ID>10721109297</cbc:ID>
+            </cac:PartyIdentification>
+            <cac:PartyName>
+                <cbc:Name><![CDATA[DOMINGUEZ CERON GEISEN LUIS]]></cbc:Name>
+            </cac:PartyName>
+        </cac:SignatoryParty>
+        <cac:DigitalSignatureAttachment>
+            <cac:ExternalReference>
+                <cbc:URI>#SignatureSP</cbc:URI>
+            </cac:ExternalReference>
+        </cac:DigitalSignatureAttachment>
+    </cac:Signature>
+
+    <cac:AccountingSupplierParty>
+        <cac:Party>
+            <cac:PartyIdentification>
+                <cbc:ID schemeID="6" schemeName="Documento de Identidad" schemeAgencyName="PE:SUNAT" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">10721109297</cbc:ID>
+            </cac:PartyIdentification>
+            <cac:PartyName>
+                <cbc:Name><![CDATA[CEVICHERIA YAPEZ]]></cbc:Name>
+            </cac:PartyName>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[DOMINGUEZ CERON GEISEN LUIS]]></cbc:RegistrationName>
+                <cac:RegistrationAddress>
+                    <cbc:ID>250101</cbc:ID>
+                    <cbc:AddressTypeCode>0000</cbc:AddressTypeCode>
+                    <cbc:CitySubdivisionName>NONE</cbc:CitySubdivisionName>
+                    <cbc:CityName>coronel portillo</cbc:CityName>
+                    <cbc:CountrySubentity>ucayali</cbc:CountrySubentity>
+                    <cbc:District>calleria</cbc:District>
+                    <cac:AddressLine>
+                        <cbc:Line><![CDATA[AV 2 DE MAYO MZ 39 LT 2]]></cbc:Line>
+                    </cac:AddressLine>
+                    <cac:Country>
+                        <cbc:IdentificationCode>PE</cbc:IdentificationCode>
+                    </cac:Country>
+                </cac:RegistrationAddress>
+            </cac:PartyLegalEntity>
+        </cac:Party>
+    </cac:AccountingSupplierParty>
+
+    <cac:AccountingCustomerParty>
+        <cac:Party>
+            <cac:PartyIdentification>
+                <cbc:ID schemeID="1" schemeName="Documento de Identidad" schemeAgencyName="PE:SUNAT" schemeURI="urn:pe:gob:sunat:cpe:see:gem:catalogos:catalogo06">70485446</cbc:ID>
+            </cac:PartyIdentification>
+            <cac:PartyLegalEntity>
+                <cbc:RegistrationName><![CDATA[Juanita Sadith Panduro Villasis]]></cbc:RegistrationName>
+                <cac:RegistrationAddress>
+                    <cac:AddressLine>
+                        <cbc:Line><![CDATA[Jr. poma rosa Mz 12 Lt 05]]></cbc:Line>
+                    </cac:AddressLine>
+                </cac:RegistrationAddress>
+            </cac:PartyLegalEntity>
+        </cac:Party>
+    </cac:AccountingCustomerParty>
+
+    <cac:PaymentTerms>
+        <cbc:ID>FormaPago</cbc:ID>
+        <cbc:PaymentMeansID>Contado</cbc:PaymentMeansID>
+    </cac:PaymentTerms>
+
+    <cac:TaxTotal>
+        <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+        <cac:TaxSubtotal>
+            <cbc:TaxableAmount currencyID="PEN">0.00</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+            <cac:TaxCategory>
+                <cac:TaxScheme>
+                    <cbc:ID>1000</cbc:ID>
+                    <cbc:Name>IGV</cbc:Name>
+                    <cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+                </cac:TaxScheme>
+            </cac:TaxCategory>
+        </cac:TaxSubtotal>
+        <cac:TaxSubtotal>
+            <cbc:TaxableAmount currencyID="PEN">5.00</cbc:TaxableAmount>
+            <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+            <cac:TaxCategory>
+                <cac:TaxScheme>
+                    <cbc:ID>9997</cbc:ID>
+                    <cbc:Name>EXO</cbc:Name>
+                    <cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+                </cac:TaxScheme>
+            </cac:TaxCategory>
+        </cac:TaxSubtotal>
+
+    </cac:TaxTotal>
+
+    <cac:LegalMonetaryTotal>
+        <cbc:LineExtensionAmount currencyID="PEN">0.00</cbc:LineExtensionAmount>
+        <cbc:TaxInclusiveAmount currencyID="PEN">5.00</cbc:TaxInclusiveAmount>
+        <cbc:PayableAmount currencyID="PEN">5.00</cbc:PayableAmount>
+    </cac:LegalMonetaryTotal>
+
+    <cac:InvoiceLine>
+        <cbc:ID>1</cbc:ID>
+        <cbc:InvoicedQuantity unitCode="NIU">1.00</cbc:InvoicedQuantity>
+        <cbc:LineExtensionAmount currencyID="PEN">5.00</cbc:LineExtensionAmount>
+        <cac:PricingReference>
+            <cac:AlternativeConditionPrice>
+                <cbc:PriceAmount currencyID="PEN">5.00</cbc:PriceAmount>
+                <cbc:PriceTypeCode>01</cbc:PriceTypeCode>
+            </cac:AlternativeConditionPrice>
+        </cac:PricingReference>
+        <cac:TaxTotal>
+            <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+            <cac:TaxSubtotal>
+                <cbc:TaxableAmount currencyID="PEN">5.00</cbc:TaxableAmount>
+                <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+                <cac:TaxCategory>
+                    <cbc:Percent>0.00</cbc:Percent>
+                    <cbc:TaxExemptionReasonCode>20</cbc:TaxExemptionReasonCode>
+                    <cac:TaxScheme>
+                        <cbc:ID>9997</cbc:ID>
+                        <cbc:Name>EXO</cbc:Name>
+                        <cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
+                    </cac:TaxScheme>
+                </cac:TaxCategory>
+            </cac:TaxSubtotal>
+        </cac:TaxTotal>
+        <cac:Item>
+            <cbc:Description><![CDATA[ARROZ BLANCO]]></cbc:Description>
+            <cac:SellersItemIdentification>
+                <cbc:ID>24</cbc:ID>
+            </cac:SellersItemIdentification>
+        </cac:Item>
+        <cac:Price>
+            <cbc:PriceAmount currencyID="PEN">5.00</cbc:PriceAmount>
+        </cac:Price>
+    </cac:InvoiceLine>
+
+</Invoice>

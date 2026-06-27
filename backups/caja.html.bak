@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>RestoGest POS — Caja</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="styles.css">
+<style>
+  .caja-grid { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
+  @media (max-width: 1100px) { .caja-grid { grid-template-columns: 1fr; } }
+  .session-card {
+    background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .session-card .label { font-size: 11px; opacity: 0.85; font-weight: 600; letter-spacing: 0.6px; }
+  .session-card .value { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .session-actions { display: flex; gap: 8px; margin-top: 18px; }
+  .session-actions .btn { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
+  .session-actions .btn:hover { background: rgba(255,255,255,0.28); color: #fff; border-color: rgba(255,255,255,0.4); }
+
+  .pay-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .pay-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .pay-row-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .pay-row-label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+  .pay-row-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+
+  .move-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .move-row:last-child { border-bottom: 0; }
+  .move-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0;
+  }
+  .move-info { flex: 1; }
+  .move-note { font-size: 13px; font-weight: 600; }
+  .move-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .move-amount { font-weight: 700; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Caja</div>
+        <div class="page-subtitle" id="cash-subtitle">Sesión actual de caja</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="addMovementModal('ingreso')"><i class="fa-solid fa-arrow-down" style="color:var(--green);"></i> Ingreso</button>
+        <button class="btn" onclick="addMovementModal('egreso')"><i class="fa-solid fa-arrow-up" style="color:var(--red);"></i> Egreso</button>
+        <button class="btn btn-danger" onclick="closeCash()"><i class="fa-solid fa-lock"></i> Cerrar Caja</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="caja-grid">
+        <div>
+          <div class="session-card">
+            <div class="label">SALDO ACTUAL EN CAJA</div>
+            <div class="value" id="cash-balance">S/ 0.00</div>
+            <div style="display:flex;gap:24px;margin-top:14px;">
+              <div>
+                <div class="label">APERTURA</div>
+                <div style="font-size:14px;font-weight:600;margin-top:2px;" id="cash-initial">S/ 0.00</div>
+              </div>
+              <div>
+                <div class="label">VENTAS</div>
+                <div style="font-size:14px;font-weight:600;margin-top:2px;" id="cash-sales">S/ 0.00</div>
+              </div>
+              <div>
+                <div class="label">INGRESOS</div>
+                <div style="font-size:14px;font-weight:600;margin-top:2px;" id="cash-income">S/ 0.00</div>
+              </div>
+              <div>
+                <div class="label">EGRESOS</div>
+                <div style="font-size:14px;font-weight:600;margin-top:2px;" id="cash-expense">S/ 0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;">
+            <div class="card-title" style="margin-bottom:12px;">Ventas por método de pago</div>
+            <div class="pay-summary">
+              <div class="pay-row">
+                <div class="pay-row-icon" style="background:var(--green-light);color:var(--green);"><i class="fa-solid fa-money-bill"></i></div>
+                <div>
+                  <div class="pay-row-label">EFECTIVO</div>
+                  <div class="pay-row-value" id="pay-efectivo">S/ 0.00</div>
+                </div>
+              </div>
+              <div class="pay-row">
+                <div class="pay-row-icon" style="background:#dbeafe;color:var(--blue);"><i class="fa-regular fa-credit-card"></i></div>
+                <div>
+                  <div class="pay-row-label">TARJETA</div>
+                  <div class="pay-row-value" id="pay-tarjeta">S/ 0.00</div>
+                </div>
+              </div>
+              <div class="pay-row">
+                <div class="pay-row-icon" style="background:var(--primary-light);color:var(--primary);"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div>
+                  <div class="pay-row-label">YAPE / PLIN</div>
+                  <div class="pay-row-value" id="pay-yape">S/ 0.00</div>
+                </div>
+              </div>
+              <div class="pay-row">
+                <div class="pay-row-icon" style="background:#fef3c7;color:var(--orange);"><i class="fa-solid fa-building-columns"></i></div>
+                <div>
+                  <div class="pay-row-label">TRANSFERENCIA</div>
+                  <div class="pay-row-value" id="pay-transferencia">S/ 0.00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:14px;font-weight:700;">Movimientos</div>
+            <span class="badge badge-gray" id="moves-count">0</span>
+          </div>
+          <div id="moves-list" style="max-height:540px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="footer-mount"></div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nuevo Movimiento</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Monto (S/)</label>
+        <input type="number" id="m-amount" class="input-field" placeholder="0.00" step="0.01">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Concepto / Nota</label>
+        <input id="m-note" class="input-field" placeholder="Ej. Compra de insumos">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMovement()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  initLayout('caja');
+
+  let movementType = 'ingreso';
+
+  function render() {
+    const session = Cash.session();
+    const moves = Cash.movements();
+    const orders = Orders.all().filter(o => o.status === 'pagada' && isToday(o.createdAt));
+
+    document.getElementById('cash-subtitle').textContent =
+      session.open ? `Caja ${session.caja} · ${session.turno} · Abierta desde ${fmt.time(session.openedAt)}` : 'Caja cerrada';
+
+    const initial = session.initialAmount || 0;
+    const sales = orders.reduce((s, o) => s + o.total, 0);
+    const cashSales = orders.filter(o => o.paymentMethod === 'efectivo').reduce((s, o) => s + o.total, 0);
+    const income = moves.filter(m => m.type === 'ingreso').reduce((s, m) => s + m.amount, 0);
+    const expense = moves.filter(m => m.type === 'egreso').reduce((s, m) => s + m.amount, 0);
+    const balance = initial + cashSales + income - expense;
+
+    document.getElementById('cash-balance').textContent = fmt.money(balance);
+    document.getElementById('cash-initial').textContent = fmt.money(initial);
+    document.getElementById('cash-sales').textContent = fmt.money(sales);
+    document.getElementById('cash-income').textContent = fmt.money(income);
+    document.getElementById('cash-expense').textContent = fmt.money(expense);
+
+    document.getElementById('pay-efectivo').textContent = fmt.money(cashSales);
+    document.getElementById('pay-tarjeta').textContent = fmt.money(orders.filter(o => o.paymentMethod === 'tarjeta').reduce((s, o) => s + o.total, 0));
+    document.getElementById('pay-yape').textContent = fmt.money(orders.filter(o => o.paymentMethod === 'yape').reduce((s, o) => s + o.total, 0));
+    document.getElementById('pay-transferencia').textContent = fmt.money(orders.filter(o => o.paymentMethod === 'transferencia').reduce((s, o) => s + o.total, 0));
+
+    // Combinar movimientos de caja + ventas en efectivo de hoy
+    const ventasMoves = orders.filter(o => o.paymentMethod === 'efectivo').map(o => ({
+      id: 'v' + o.id, type: 'venta', amount: o.total, note: `Orden #${o.id}`, createdAt: o.createdAt
+    }));
+    const allMoves = [...moves, ...ventasMoves].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    document.getElementById('moves-count').textContent = allMoves.length;
+
+    const list = document.getElementById('moves-list');
+    if (allMoves.length === 0) {
+      list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-coins"></i><h3>Sin movimientos</h3></div>`;
+      return;
+    }
+    list.innerHTML = allMoves.map(m => {
+      const styles = {
+        apertura: { i: 'fa-lock-open', bg: 'var(--primary-light)', c: 'var(--primary)', sign: '' },
+        venta: { i: 'fa-cart-shopping', bg: 'var(--green-light)', c: 'var(--green)', sign: '+' },
+        ingreso: { i: 'fa-arrow-down', bg: 'var(--green-light)', c: 'var(--green)', sign: '+' },
+        egreso: { i: 'fa-arrow-up', bg: '#fee2e2', c: 'var(--red)', sign: '−' },
+        cierre: { i: 'fa-lock', bg: '#f3f4f6', c: 'var(--text-muted)', sign: '' },
+      };
+      const s = styles[m.type] || styles.ingreso;
+      return `
+        <div class="move-row">
+          <div class="move-icon" style="background:${s.bg};color:${s.c};"><i class="fa-solid ${s.i}"></i></div>
+          <div class="move-info">
+            <div class="move-note">${m.note}</div>
+            <div class="move-time">${fmt.time(m.createdAt)} · ${m.type.toUpperCase()}</div>
+          </div>
+          <div class="move-amount" style="color:${s.c};">${s.sign}${fmt.money(m.amount)}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function isToday(iso) {
+    return new Date(iso).toDateString() === new Date().toDateString();
+  }
+
+  window.addMovementModal = (type) => {
+    movementType = type;
+    document.getElementById('modal-title').textContent = type === 'ingreso' ? 'Registrar Ingreso' : 'Registrar Egreso';
+    document.getElementById('m-amount').value = '';
+    document.getElementById('m-note').value = '';
+    document.getElementById('modal').classList.add('active');
+  };
+
+  window.closeModal = () => document.getElementById('modal').classList.remove('active');
+
+  window.saveMovement = () => {
+    const amount = parseFloat(document.getElementById('m-amount').value);
+    const note = document.getElementById('m-note').value.trim();
+    if (!amount || amount <= 0) { showToast('Monto inválido', 'error'); return; }
+    if (!note) { showToast('Agrega un concepto', 'error'); return; }
+    Cash.addMovement({ type: movementType, amount, note });
+    showToast(`${movementType === 'ingreso' ? 'Ingreso' : 'Egreso'} registrado`, 'success');
+    closeModal();
+    render();
+  };
+
+  window.closeCash = () => {
+    if (!confirm('¿Cerrar caja? Esto registrará el cierre del turno.')) return;
+    const session = Cash.session();
+    Cash.addMovement({ type: 'cierre', amount: 0, note: 'Cierre de caja - ' + session.turno });
+    Cash.setSession({ ...session, open: false, closedAt: new Date().toISOString() });
+    showToast('Caja cerrada', 'success');
+    render();
+  };
+
+  render();
+</script>
+</body>
+</html>

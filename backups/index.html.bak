@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RestoGest POS — Nueva Orden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* PAGE-SPECIFIC: NUEVA ORDEN */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-rows: auto 1fr auto;
+    background: var(--bg-light);
+    overflow: hidden;
+  }
+  .topbar {
+    grid-column: 1 / 2;
+    background: var(--bg-white);
+    padding: 18px 24px;
+    display: flex; align-items: center; gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .order-title { display: flex; flex-direction: column; gap: 2px; }
+  .order-title .label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.8px; }
+  .order-title .title { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+  .persons-badge {
+    background: #f3f4f6; padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: #4b5563;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .topbar .search-box { flex: 1; max-width: 360px; margin-left: auto; }
+  .topbar .search-box .scan { color: var(--text-muted); cursor: pointer; padding-left: 10px; border-left: 1px solid var(--border); }
+
+  .content {
+    grid-column: 1 / 2;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    overflow: hidden;
+    padding: 18px 24px 0;
+    gap: 20px;
+  }
+  .categories { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding-bottom: 10px; }
+  .categories-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; padding-left: 6px; margin-bottom: 4px; }
+  .cat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 500; color: var(--text-dark);
+    transition: all 0.15s;
+  }
+  .cat-item i { width: 16px; text-align: center; }
+  .cat-item:hover { border-color: var(--primary); }
+  .cat-item.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(91, 61, 245, 0.25); }
+  .cat-item.active i { color: #fff !important; }
+  .cat-add { background: transparent; border: 1px dashed #cbd5e1; color: var(--text-muted); justify-content: center; margin-top: 6px; }
+
+  .products-area { display: flex; flex-direction: column; gap: 16px; overflow: hidden; }
+  .filter-bar { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+  .filter-chip {
+    padding: 8px 16px; border-radius: 20px;
+    background: var(--bg-white); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text-dark); font-family: inherit;
+  }
+  .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .filter-chip .star { color: var(--yellow); }
+  .filter-chip.active .star { color: #fff; }
+  .filter-chip .fire { color: #ef4444; }
+  .filter-chip .promo { color: var(--green); }
+  .view-toggle { margin-left: auto; display: flex; gap: 4px; background: var(--bg-white); padding: 4px; border: 1px solid var(--border); border-radius: 8px; }
+  .view-toggle button { width: 30px; height: 28px; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: var(--text-muted); }
+  .view-toggle button.active { background: var(--primary); color: #fff; }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    overflow-y: auto;
+    padding-bottom: 20px;
+    padding-right: 4px;
+  }
+  .product-card {
+    background: var(--bg-white);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+  .product-img { width: 100%; aspect-ratio: 1.4 / 1; background-size: cover; background-position: center; position: relative; background-color: #f3f4f6; }
+  .product-fav {
+    position: absolute; top: 10px; right: 10px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    display: flex; align-items: center; justify-content: center;
+    color: #d1d5db; font-size: 13px; cursor: pointer;
+    border: 0;
+  }
+  .product-fav.active { color: var(--yellow); }
+  .product-badge {
+    position: absolute; top: 10px; left: 10px;
+    background: var(--primary); color: #fff;
+    padding: 3px 10px; border-radius: 6px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+  }
+  .product-info { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; }
+  .product-name { font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 2px; }
+  .product-price { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+  .product-add {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    border: 0; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 10px rgba(91, 61, 245, 0.3);
+  }
+  .product-add:hover { background: var(--primary-hover); }
+
+  .bottom-panel {
+    grid-column: 1 / 2;
+    background: var(--bg-white);
+    border-top: 1px solid var(--border);
+    padding: 14px 24px;
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .panel-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.8px; margin-bottom: 10px; }
+  .tables-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .table-btn {
+    width: 56px; height: 56px;
+    background: var(--bg-white);
+    border: 2px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 600;
+    font-family: inherit;
+  }
+  .table-btn .num { font-size: 16px; line-height: 1; }
+  .table-btn .pers { font-size: 9px; color: var(--text-muted); margin-top: 3px; }
+  .table-btn.libre { color: var(--green); border-color: #d1fae5; background: #f0fdf4; }
+  .table-btn.ocupada { color: #d97706; border-color: #fed7aa; background: #fffbeb; }
+  .table-btn.cuenta { color: #2563eb; border-color: #bfdbfe; background: #eff6ff; }
+  .table-btn.reservada { color: var(--primary); border-color: #ddd6fe; background: #f5f3ff; }
+  .table-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(91, 61, 245, 0.35); }
+  .table-btn.active .pers { color: rgba(255,255,255,0.85); }
+  .legend { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+  .legend-item { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+  .legend-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-libre { background: var(--green); }
+  .dot-ocupada { background: var(--orange); }
+  .dot-cuenta { background: #3b82f6; }
+  .dot-reservada { background: var(--primary); }
+
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .quick-btn {
+    background: var(--bg-white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; font-size: 13px; font-weight: 500;
+    color: var(--text-dark); font-family: inherit;
+  }
+  .quick-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .quick-btn i { width: 30px; height: 30px; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text-muted); }
+  .quick-btn:nth-child(1) i { background: #d1fae5; color: var(--green); }
+  .quick-btn:nth-child(2) i { background: #ede9ff; color: var(--primary); }
+  .quick-btn:nth-child(3) i { background: #fef3c7; color: var(--orange); }
+  .quick-btn:nth-child(4) i { background: #dbeafe; color: #2563eb; }
+
+  .order-panel {
+    grid-row: 1 / 4;
+    grid-column: 2 / 3;
+    background: var(--bg-white);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .order-header { padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .order-header h3 { font-size: 18px; font-weight: 700; }
+  .order-tabs { display: flex; padding: 12px 16px; gap: 4px; border-bottom: 1px solid var(--border); }
+  .order-tab {
+    flex: 1; padding: 10px 8px; text-align: center;
+    border: 0; background: transparent; cursor: pointer;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.4px;
+    color: var(--text-muted); border-radius: 8px;
+    font-family: inherit;
+  }
+  .order-tab.active { color: var(--primary); background: var(--primary-light); border: 1px solid #ddd6fe; }
+
+  .order-items { flex: 1; overflow-y: auto; padding: 8px 16px; }
+  .order-item {
+    padding: 12px 4px;
+    border-bottom: 1px solid #f3f4f6;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .qty-control { display: flex; align-items: center; background: #f9fafb; border-radius: 8px; overflow: hidden; }
+  .qty-btn { width: 26px; height: 26px; background: transparent; border: 0; cursor: pointer; font-size: 13px; color: var(--text-muted); }
+  .qty-num { font-size: 13px; font-weight: 600; padding: 0 8px; min-width: 22px; text-align: center; }
+  .order-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .order-item-name { font-size: 13px; font-weight: 600; }
+  .order-item-note { font-size: 11px; color: var(--primary); font-weight: 500; cursor: pointer; }
+  .order-item-price { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .order-item-remove { width: 22px; height: 22px; border: 0; background: transparent; color: #d1d5db; cursor: pointer; }
+  .order-item-remove:hover { color: var(--red); }
+
+  .observation { margin: 12px 16px; background: #f9fafb; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+  .observation input { flex: 1; border: 0; background: transparent; outline: 0; font-size: 13px; font-family: inherit; }
+  .observation i { color: var(--primary); }
+
+  .order-summary { padding: 14px 20px; border-top: 1px solid var(--border); }
+  .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; color: var(--text-muted); }
+  .summary-row span:last-child { color: var(--text-dark); font-weight: 600; }
+  .total-row { display: flex; justify-content: space-between; padding: 10px 0 4px; align-items: center; }
+  .total-row .label { font-size: 14px; font-weight: 700; }
+  .total-row .amount { font-size: 22px; font-weight: 700; color: var(--primary); }
+
+  .order-actions { padding: 0 20px 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .order-actions .btn { padding: 12px; }
+
+  .payment-methods { padding: 0 20px 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .pay-btn {
+    background: var(--bg-white); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 6px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 500; color: var(--text-muted);
+    font-family: inherit;
+  }
+  .pay-btn i { font-size: 16px; }
+  .pay-btn.active { background: #ecfdf5; border-color: var(--green); color: var(--green); }
+  .pay-btn:nth-child(2) i { color: #3b82f6; }
+  .pay-btn:nth-child(3) i { color: var(--primary); }
+  .pay-btn:nth-child(4) i { color: var(--orange); }
+
+  .charge-btn {
+    margin: 0 20px 16px;
+    background: var(--primary);
+    color: #fff;
+    border: 0;
+    border-radius: 12px;
+    padding: 18px 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 16px; font-weight: 700; font-family: inherit;
+    box-shadow: 0 8px 20px rgba(91, 61, 245, 0.35);
+  }
+  .charge-btn:hover { background: var(--primary-hover); }
+  .charge-btn .left { display: flex; align-items: center; gap: 10px; }
+
+  .footer { grid-column: 2 / 3; }
+  .empty-cart { padding: 50px 20px; text-align: center; color: var(--text-muted); font-size: 13px; }
+  .empty-cart i { font-size: 36px; opacity: 0.3; margin-bottom: 10px; display:block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+
+  <main class="main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="order-title">
+        <span class="label">NUEVA ORDEN</span>
+        <span class="title">
+          <span id="table-title">Mesa 5</span>
+          <span class="persons-badge"><i class="fa-solid fa-user-group"></i> <span id="table-persons">4</span> personas</span>
+        </span>
+      </div>
+      <div class="search-box" style="flex:1;max-width:360px;margin-left:auto;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="search-input" placeholder="Buscar productos..." />
+        <i class="fa-solid fa-barcode scan"></i>
+      </div>
+      <button class="btn"><i class="fa-regular fa-bookmark"></i> Unir / Separar</button>
+      <button class="btn"><i class="fa-solid fa-shuffle"></i> Cambiar Mesa</button>
+      <button class="btn btn-icon"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+    </div>
+
+    <div class="content">
+      <div class="categories" id="categories-list"></div>
+
+      <div class="products-area">
+        <div class="filter-bar">
+          <button class="filter-chip active" data-filter="all"><i class="fa-solid fa-star"></i> Todos</button>
+          <button class="filter-chip" data-filter="favoritos"><i class="fa-solid fa-star star"></i> Favoritos</button>
+          <button class="filter-chip" data-filter="vendidos"><i class="fa-solid fa-fire fire"></i> Más Vendidos</button>
+          <button class="filter-chip" data-filter="promociones"><i class="fa-solid fa-tag promo"></i> Promociones</button>
+          <div class="view-toggle">
+            <button class="active"><i class="fa-solid fa-table-cells"></i></button>
+            <button><i class="fa-solid fa-list"></i></button>
+          </div>
+        </div>
+        <div class="products-grid" id="products-grid"></div>
+      </div>
+    </div>
+
+    <div class="bottom-panel">
+      <div>
+        <div class="panel-label">MESAS</div>
+        <div class="tables-row" id="tables-row"></div>
+        <div class="legend">
+          <div class="legend-item"><span class="dot dot-libre"></span> Libre</div>
+          <div class="legend-item"><span class="dot dot-ocupada"></span> Ocupada</div>
+          <div class="legend-item"><span class="dot dot-cuenta"></span> En cuenta</div>
+          <div class="legend-item"><span class="dot dot-reservada"></span> Reservada</div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-label">ACCESOS RÁPIDOS</div>
+        <div class="quick-grid">
+          <button class="quick-btn" onclick="applyDiscount()"><i class="fa-solid fa-percent"></i> Descuento</button>
+          <button class="quick-btn" onclick="addService()"><i class="fa-solid fa-bell-concierge"></i> Servicio</button>
+          <button class="quick-btn" onclick="document.getElementById('observation-input').focus()"><i class="fa-regular fa-note-sticky"></i> Nota</button>
+          <button class="quick-btn" onclick="window.location.href='clientes.html'"><i class="fa-regular fa-user"></i> Cliente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER PANEL -->
+    <aside class="order-panel">
+      <div class="order-header">
+        <h3 id="order-id">Orden #00059</h3>
+        <i class="fa-solid fa-ellipsis-vertical" style="color:#9ca3af;cursor:pointer;"></i>
+      </div>
+      <div class="order-tabs">
+        <button class="order-tab active" data-type="dine_in">DINE IN</button>
+        <button class="order-tab" data-type="para_llevar">PARA LLEVAR</button>
+        <button class="order-tab" data-type="delivery">DELIVERY</button>
+      </div>
+      <div class="order-items" id="order-items"></div>
+      <div class="observation">
+        <input id="observation-input" placeholder="Agregar observación..." />
+        <i class="fa-regular fa-comment-dots"></i>
+      </div>
+      <div class="order-summary">
+        <div class="summary-row"><span>Subtotal</span><span id="subtotal">S/ 0.00</span></div>
+        <div class="summary-row"><span>IGV (18%)</span><span id="tax">S/ 0.00</span></div>
+        <div class="total-row">
+          <span class="label">TOTAL</span>
+          <span class="amount" id="total">S/ 0.00</span>
+        </div>
+      </div>
+      <div class="order-actions">
+        <button class="btn" onclick="saveOrder()"><i class="fa-regular fa-bookmark"></i> Guardar Orden</button>
+        <button class="btn btn-primary" onclick="sendToKitchen()"><i class="fa-solid fa-utensils"></i> Enviar a Cocina</button>
+      </div>
+      <div class="payment-methods">
+        <button class="pay-btn active" data-method="efectivo"><i class="fa-solid fa-money-bill"></i> Efectivo</button>
+        <button class="pay-btn" data-method="tarjeta"><i class="fa-regular fa-credit-card"></i> Tarjeta</button>
+        <button class="pay-btn" data-method="yape"><i class="fa-solid fa-mobile-screen"></i> Yape / Plin</button>
+        <button class="pay-btn" data-method="transferencia"><i class="fa-solid fa-building-columns"></i> Transferencia</button>
+      </div>
+      <button class="charge-btn" onclick="chargeOrder()">
+        <span class="left"><i class="fa-regular fa-calendar"></i> Cobrar</span>
+        <span id="charge-amount">S/ 0.00</span>
+      </button>
+    </aside>
+
+    <div id="footer-mount"></div>
+  </main>
+</div>
+
+<script src="app.js"></script>
+<script>
+  initLayout('index');
+
+  // STATE
+  let state = {
+    selectedTable: 5,
+    activeCategory: 'all',
+    activeFilter: 'all',
+    cart: [],
+    type: 'dine_in',
+    paymentMethod: 'efectivo',
+    observation: '',
+    searchTerm: '',
+  };
+
+  // Cargar orden activa de Mesa 5 si existe
+  const existingOrder = Orders.all().find(o => o.table === 5 && o.status === 'en_curso');
+  if (existingOrder) {
+    state.cart = existingOrder.items.map(i => ({ ...i }));
+    state.type = existingOrder.type;
+    document.getElementById('order-id').textContent = `Orden #${existingOrder.id}`;
+  } else {
+    document.getElementById('order-id').textContent = `Orden #${String(Store.get(Store.KEYS.counter, 1)).padStart(5, '0')}`;
+  }
+
+  // RENDER CATEGORIES
+  function renderCategories() {
+    const cats = Store.get(Store.KEYS.categories, []);
+    const list = document.getElementById('categories-list');
+    list.innerHTML = `
+      <div class="categories-label">CATEGORÍAS</div>
+      ${cats.map(c => `
+        <div class="cat-item ${c.id === state.activeCategory ? 'active' : ''}" data-cat="${c.id}">
+          <i class="fa-solid ${c.icon}" style="color:${c.color};"></i> ${c.name}
+        </div>
+      `).join('')}
+      <div class="cat-item cat-add"><i class="fa-solid fa-plus"></i> Nueva Categoría</div>
+    `;
+    list.querySelectorAll('.cat-item[data-cat]').forEach(el => {
+      el.addEventListener('click', () => {
+        state.activeCategory = el.dataset.cat;
+        renderCategories();
+        renderProducts();
+      });
+    });
+  }
+
+  // RENDER PRODUCTS
+  function renderProducts() {
+    let products = Store.get(Store.KEYS.products, []);
+    if (state.activeCategory !== 'all') products = products.filter(p => p.category === state.activeCategory);
+    if (state.activeFilter === 'favoritos') products = products.filter(p => p.favorite);
+    if (state.activeFilter === 'vendidos') products = products.filter(p => p.popular);
+    if (state.searchTerm) {
+      const t = state.searchTerm.toLowerCase();
+      products = products.filter(p => p.name.toLowerCase().includes(t));
+    }
+    const grid = document.getElementById('products-grid');
+    if (products.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1;" class="empty-state">
+        <i class="fa-solid fa-box-open"></i>
+        <h3>Sin productos</h3>
+        <p>No hay productos en esta categoría</p>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = products.map(p => `
+      <div class="product-card">
+        <div class="product-img" style="background-image:url('${p.img}');">
+          ${p.popular ? '<div class="product-badge">POPULAR</div>' : ''}
+          <button class="product-fav ${p.favorite ? 'active' : ''}" data-fav="${p.id}">
+            <i class="fa-${p.favorite ? 'solid' : 'regular'} fa-star"></i>
+          </button>
+        </div>
+        <div class="product-info">
+          <div><div class="product-name">${p.name}</div><div class="product-price">${fmt.money(p.price)}</div></div>
+          <button class="product-add" data-add="${p.id}"><i class="fa-solid fa-plus"></i></button>
+        </div>
+      </div>
+    `).join('');
+    grid.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); addToCart(b.dataset.add); }));
+    grid.querySelectorAll('[data-fav]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); toggleFav(b.dataset.fav); }));
+  }
+
+  function toggleFav(id) {
+    const list = Store.get(Store.KEYS.products, []);
+    const p = list.find(x => x.id === id);
+    if (p) { p.favorite = !p.favorite; Store.set(Store.KEYS.products, list); renderProducts(); }
+  }
+
+  // RENDER TABLES
+  function renderTables() {
+    const tables = Tables.all().slice(0, 10);
+    const row = document.getElementById('tables-row');
+    row.innerHTML = tables.map(t => `
+      <button class="table-btn ${t.status} ${t.num === state.selectedTable ? 'active' : ''}" data-table="${t.num}">
+        <span class="num">${t.num}</span><span class="pers">${t.capacity} pers.</span>
+      </button>
+    `).join('');
+    row.querySelectorAll('[data-table]').forEach(b => {
+      b.addEventListener('click', () => {
+        state.selectedTable = +b.dataset.table;
+        const tableInfo = tables.find(x => x.num === state.selectedTable);
+        document.getElementById('table-title').textContent = `Mesa ${state.selectedTable}`;
+        document.getElementById('table-persons').textContent = tableInfo.capacity;
+        renderTables();
+      });
+    });
+  }
+
+  // CART
+  function addToCart(productId) {
+    const products = Store.get(Store.KEYS.products, []);
+    const p = products.find(x => x.id === productId);
+    if (!p) return;
+    const existing = state.cart.find(i => i.productId === productId && !i.note);
+    if (existing) existing.qty += 1;
+    else state.cart.push({ productId: p.id, name: p.name, price: p.price, qty: 1, note: '' });
+    renderCart();
+  }
+
+  function renderCart() {
+    const items = document.getElementById('order-items');
+    if (state.cart.length === 0) {
+      items.innerHTML = `<div class="empty-cart"><i class="fa-solid fa-cart-shopping"></i>Aún no hay productos</div>`;
+    } else {
+      items.innerHTML = state.cart.map((i, idx) => `
+        <div class="order-item">
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+            <span class="qty-num">${i.qty}</span>
+            <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+          </div>
+          <div class="order-item-info">
+            <div class="order-item-name">${i.name}</div>
+            <div class="order-item-note" onclick="editNote(${idx})">${i.note || '+ Agregar nota'}</div>
+          </div>
+          <div class="order-item-price">${fmt.money(i.price * i.qty)}</div>
+          <button class="order-item-remove" onclick="removeItem(${idx})"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `).join('');
+    }
+    const sub = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const tax = sub * 0.18;
+    const total = sub + tax;
+    document.getElementById('subtotal').textContent = fmt.money(sub);
+    document.getElementById('tax').textContent = fmt.money(tax);
+    document.getElementById('total').textContent = fmt.money(total);
+    document.getElementById('charge-amount').textContent = fmt.money(total);
+  }
+
+  window.changeQty = (idx, delta) => {
+    state.cart[idx].qty += delta;
+    if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
+    renderCart();
+  };
+  window.removeItem = (idx) => { state.cart.splice(idx, 1); renderCart(); };
+  window.editNote = (idx) => {
+    const note = prompt('Nota para ' + state.cart[idx].name + ':', state.cart[idx].note || '');
+    if (note !== null) { state.cart[idx].note = note; renderCart(); }
+  };
+
+  // ACTIONS
+  function buildOrderObject(status) {
+    const sub = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const tax = sub * 0.18;
+    return {
+      id: existingOrder ? existingOrder.id : nextOrderId(),
+      table: state.type === 'dine_in' ? state.selectedTable : null,
+      type: state.type,
+      status,
+      items: [...state.cart],
+      subtotal: +sub.toFixed(2),
+      tax: +tax.toFixed(2),
+      total: +(sub + tax).toFixed(2),
+      paymentMethod: status === 'pagada' ? state.paymentMethod : null,
+      customerId: null,
+      observation: document.getElementById('observation-input').value,
+      createdAt: new Date().toISOString(),
+      waiter: 'Juan Pérez'
+    };
+  }
+
+  window.saveOrder = () => {
+    if (state.cart.length === 0) { showToast('La orden está vacía', 'error'); return; }
+    const order = buildOrderObject('guardada');
+    if (existingOrder) Orders.update(existingOrder.id, order);
+    else Orders.add(order);
+    if (state.type === 'dine_in') Tables.update(Tables.all().find(t => t.num === state.selectedTable).id, { status: 'ocupada' });
+    showToast('Orden guardada', 'success');
+  };
+
+  window.sendToKitchen = () => {
+    if (state.cart.length === 0) { showToast('La orden está vacía', 'error'); return; }
+    const order = buildOrderObject('en_curso');
+    if (existingOrder) Orders.update(existingOrder.id, order);
+    else Orders.add(order);
+    if (state.type === 'dine_in') {
+      const tbl = Tables.all().find(t => t.num === state.selectedTable);
+      if (tbl) Tables.update(tbl.id, { status: 'ocupada' });
+    }
+    showToast('Enviado a cocina', 'success');
+    renderTables();
+  };
+
+  window.chargeOrder = () => {
+    if (state.cart.length === 0) { showToast('La orden está vacía', 'error'); return; }
+    const order = buildOrderObject('pagada');
+    if (existingOrder) Orders.update(existingOrder.id, order);
+    else Orders.add(order);
+    Cash.addMovement({ type: 'venta', amount: order.total, note: `Orden #${order.id} - ${state.paymentMethod}`, orderId: order.id });
+    if (state.type === 'dine_in') {
+      const tbl = Tables.all().find(t => t.num === state.selectedTable);
+      if (tbl) Tables.update(tbl.id, { status: 'libre' });
+    }
+    showToast(`Cobrado ${fmt.money(order.total)}`, 'success');
+    state.cart = [];
+    renderCart();
+    renderTables();
+    setTimeout(() => location.reload(), 800);
+  };
+
+  window.applyDiscount = () => {
+    const pct = parseFloat(prompt('Descuento (%):', '10'));
+    if (!pct || pct <= 0) return;
+    state.cart.forEach(i => { i.price = +(i.price * (1 - pct/100)).toFixed(2); });
+    showToast(`Descuento ${pct}% aplicado`, 'success');
+    renderCart();
+  };
+
+  window.addService = () => {
+    const sub = state.cart.reduce((s, i) => s + i.price * i.qty, 0);
+    state.cart.push({ productId: 'service', name: 'Servicio (10%)', price: +(sub * 0.1).toFixed(2), qty: 1, note: '' });
+    renderCart();
+  };
+
+  // EVENTS
+  document.querySelectorAll('.filter-chip').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active');
+    state.activeFilter = c.dataset.filter;
+    renderProducts();
+  }));
+  document.querySelectorAll('.order-tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.order-tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    state.type = t.dataset.type;
+  }));
+  document.querySelectorAll('.pay-btn').forEach(p => p.addEventListener('click', () => {
+    document.querySelectorAll('.pay-btn').forEach(x => x.classList.remove('active'));
+    p.classList.add('active');
+    state.paymentMethod = p.dataset.method;
+  }));
+  document.querySelectorAll('.view-toggle button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.view-toggle button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  }));
+  document.getElementById('search-input').addEventListener('input', e => {
+    state.searchTerm = e.target.value;
+    renderProducts();
+  });
+
+  // INIT
+  renderCategories();
+  renderProducts();
+  renderTables();
+  renderCart();
+</script>
+</body>
+</html>

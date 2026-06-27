@@ -1,0 +1,7 @@
+# Solo permitir servir imagenes
+<FilesMatch "\.(jpg|jpeg|png|webp|gif)$">
+    Require all granted
+</FilesMatch>
+<FilesMatch "\.(php|phtml|html|htm)$">
+    Require all denied
+</FilesMatch>

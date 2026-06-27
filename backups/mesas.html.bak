@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>RestoGest POS — Mesas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="styles.css">
+<style>
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .mesa-card {
+    background: var(--bg-white);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .mesa-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+  .mesa-card.libre { border-color: #d1fae5; background: #f0fdf4; }
+  .mesa-card.ocupada { border-color: #fed7aa; background: #fffbeb; }
+  .mesa-card.cuenta { border-color: #bfdbfe; background: #eff6ff; }
+  .mesa-card.reservada { border-color: #ddd6fe; background: #f5f3ff; }
+  .mesa-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .mesa-num { font-size: 28px; font-weight: 700; }
+  .mesa-card.libre .mesa-num { color: var(--green); }
+  .mesa-card.ocupada .mesa-num { color: #d97706; }
+  .mesa-card.cuenta .mesa-num { color: #2563eb; }
+  .mesa-card.reservada .mesa-num { color: var(--primary); }
+  .mesa-icon { font-size: 22px; opacity: 0.4; }
+  .mesa-info { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .mesa-status { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; margin-top: 12px; }
+
+  .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-pill {
+    padding: 8px 16px; border-radius: 20px;
+    background: var(--bg-white); border: 1px solid var(--border);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    color: var(--text-dark); display: flex; align-items: center; gap: 6px;
+    font-family: inherit;
+  }
+  .filter-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .filter-pill .count { background: rgba(0,0,0,0.08); padding: 1px 7px; border-radius: 10px; font-size: 10px; }
+  .filter-pill.active .count { background: rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Mesas</div>
+        <div class="page-subtitle">Administra el estado de cada mesa del salón</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn" onclick="document.getElementById('search-mesas').focus()"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+        <button class="btn btn-primary" onclick="openAddTable()"><i class="fa-solid fa-plus"></i> Nueva Mesa</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="filter-row">
+        <button class="filter-pill active" data-filter="all">Todas <span class="count" id="count-all">0</span></button>
+        <button class="filter-pill" data-filter="libre"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);"></span> Libres <span class="count" id="count-libre">0</span></button>
+        <button class="filter-pill" data-filter="ocupada"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--orange);"></span> Ocupadas <span class="count" id="count-ocupada">0</span></button>
+        <button class="filter-pill" data-filter="cuenta"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--blue);"></span> En cuenta <span class="count" id="count-cuenta">0</span></button>
+        <button class="filter-pill" data-filter="reservada"><span class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--primary);"></span> Reservadas <span class="count" id="count-reservada">0</span></button>
+        <input id="search-mesas" class="input-field" placeholder="Buscar mesa..." style="margin-left:auto;max-width:240px;">
+      </div>
+
+      <div class="tables-grid" id="tables-grid"></div>
+    </div>
+
+    <div id="footer-mount"></div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nueva Mesa</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Número de mesa</label>
+        <input type="number" id="m-num" class="input-field" placeholder="Ej. 11">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Capacidad (personas)</label>
+        <input type="number" id="m-cap" class="input-field" placeholder="Ej. 4">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Estado</label>
+        <select id="m-status" class="input-field">
+          <option value="libre">Libre</option>
+          <option value="ocupada">Ocupada</option>
+          <option value="cuenta">En cuenta</option>
+          <option value="reservada">Reservada</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTable()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  initLayout('mesas');
+
+  let editingId = null;
+  let activeFilter = 'all';
+  let searchTerm = '';
+
+  function statusLabel(s) {
+    return { libre: 'Libre', ocupada: 'Ocupada', cuenta: 'En cuenta', reservada: 'Reservada' }[s] || s;
+  }
+
+  function render() {
+    let tables = Tables.all();
+    document.getElementById('count-all').textContent = tables.length;
+    document.getElementById('count-libre').textContent = tables.filter(t => t.status === 'libre').length;
+    document.getElementById('count-ocupada').textContent = tables.filter(t => t.status === 'ocupada').length;
+    document.getElementById('count-cuenta').textContent = tables.filter(t => t.status === 'cuenta').length;
+    document.getElementById('count-reservada').textContent = tables.filter(t => t.status === 'reservada').length;
+
+    if (activeFilter !== 'all') tables = tables.filter(t => t.status === activeFilter);
+    if (searchTerm) tables = tables.filter(t => String(t.num).includes(searchTerm));
+
+    const grid = document.getElementById('tables-grid');
+    if (tables.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1;" class="empty-state">
+        <i class="fa-solid fa-table"></i>
+        <h3>Sin mesas</h3>
+        <p>No hay mesas que coincidan con el filtro</p>
+      </div>`;
+      return;
+    }
+
+    // Calcular orden activa por mesa
+    const orders = Orders.all();
+    grid.innerHTML = tables.map(t => {
+      const order = orders.find(o => o.table === t.num && o.status === 'en_curso');
+      return `
+        <div class="mesa-card ${t.status}" onclick="openMesa(${t.id})">
+          <div class="mesa-card-header">
+            <div class="mesa-num">${t.num}</div>
+            <i class="fa-solid fa-utensils mesa-icon"></i>
+          </div>
+          <div class="mesa-info"><i class="fa-solid fa-user-group" style="font-size:11px;"></i> ${t.capacity} personas</div>
+          ${order ? `<div class="mesa-info"><i class="fa-solid fa-receipt" style="font-size:11px;"></i> Orden #${order.id} · ${fmt.money(order.total)}</div>` : ''}
+          <div class="mesa-status">${statusLabel(t.status)}</div>
+          <div style="display:flex;gap:6px;margin-top:12px;">
+            <button class="btn btn-sm" onclick="event.stopPropagation();editTable(${t.id})" style="flex:1;"><i class="fa-solid fa-pen"></i> Editar</button>
+            <button class="btn btn-sm btn-icon" onclick="event.stopPropagation();deleteTable(${t.id})"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.openMesa = (id) => {
+    const t = Tables.all().find(x => x.id === id);
+    if (!t) return;
+    if (t.status === 'libre' || t.status === 'ocupada') {
+      // simplemente vamos a Nueva Orden con esa mesa seleccionada (en una app real con query params)
+      window.location.href = 'index.html';
+    }
+  };
+
+  window.openAddTable = () => {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Nueva Mesa';
+    document.getElementById('m-num').value = '';
+    document.getElementById('m-cap').value = '';
+    document.getElementById('m-status').value = 'libre';
+    document.getElementById('modal').classList.add('active');
+  };
+
+  window.editTable = (id) => {
+    const t = Tables.all().find(x => x.id === id);
+    if (!t) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = `Editar Mesa ${t.num}`;
+    document.getElementById('m-num').value = t.num;
+    document.getElementById('m-cap').value = t.capacity;
+    document.getElementById('m-status').value = t.status;
+    document.getElementById('modal').classList.add('active');
+  };
+
+  window.closeModal = () => document.getElementById('modal').classList.remove('active');
+
+  window.saveTable = () => {
+    const num = parseInt(document.getElementById('m-num').value);
+    const cap = parseInt(document.getElementById('m-cap').value);
+    const status = document.getElementById('m-status').value;
+    if (!num || !cap) { showToast('Completa los campos', 'error'); return; }
+    if (editingId) {
+      Tables.update(editingId, { num, capacity: cap, status });
+      showToast('Mesa actualizada', 'success');
+    } else {
+      Tables.add({ id: Date.now(), num, capacity: cap, status });
+      showToast('Mesa creada', 'success');
+    }
+    closeModal();
+    render();
+  };
+
+  window.deleteTable = (id) => {
+    if (!confirm('¿Eliminar esta mesa?')) return;
+    Tables.remove(id);
+    showToast('Mesa eliminada', 'success');
+    render();
+  };
+
+  document.querySelectorAll('.filter-pill').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    activeFilter = b.dataset.filter;
+    render();
+  }));
+
+  document.getElementById('search-mesas').addEventListener('input', e => {
+    searchTerm = e.target.value;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

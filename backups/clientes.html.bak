@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>RestoGest POS — Clientes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="styles.css">
+<style>
+  .client-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), #8b5cf6);
+    color: #fff; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px; flex-shrink: 0;
+  }
+  .client-cell { display: flex; align-items: center; gap: 12px; }
+  .client-name { font-weight: 600; font-size: 13px; }
+  .client-doc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .stars { color: var(--yellow); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Clientes</div>
+        <div class="page-subtitle">Gestión de la base de datos de clientes</div>
+      </div>
+      <button class="btn btn-primary" onclick="openAdd()"><i class="fa-solid fa-plus"></i> Nuevo Cliente</button>
+    </div>
+
+    <div class="page-content">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--primary-light);color:var(--primary);"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-label">TOTAL CLIENTES</div>
+          <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-light);color:var(--green);"><i class="fa-solid fa-star"></i></div>
+          <div class="stat-label">CLIENTES VIP</div>
+          <div class="stat-value" id="stat-vip">0</div>
+          <div class="stat-trend up">+ S/ 500 gastados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;color:var(--orange);"><i class="fa-solid fa-receipt"></i></div>
+          <div class="stat-label">PROMEDIO ÓRDENES</div>
+          <div class="stat-value" id="stat-avg">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dbeafe;color:var(--blue);"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+          <div class="stat-label">VENTAS A CLIENTES</div>
+          <div class="stat-value" id="stat-revenue">S/ 0</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div class="search-box" style="background:var(--bg-white);max-width:360px;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input id="search-clients" placeholder="Buscar por nombre, teléfono o documento..." />
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>CLIENTE</th>
+              <th>TELÉFONO</th>
+              <th>EMAIL</th>
+              <th>ÓRDENES</th>
+              <th>TOTAL GASTADO</th>
+              <th>ÚLTIMA VISITA</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clients-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="footer-mount"></div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nuevo Cliente</div>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="input-group">
+        <label class="input-label">Nombre completo *</label>
+        <input id="c-name" class="input-field" placeholder="Ej. María García">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Documento</label>
+        <input id="c-doc" class="input-field" placeholder="DNI o RUC">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Teléfono</label>
+        <input id="c-phone" class="input-field" placeholder="987654321">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Email</label>
+        <input type="email" id="c-email" class="input-field" placeholder="cliente@email.com">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  initLayout('clientes');
+
+  let editingId = null;
+  let searchTerm = '';
+
+  function initials(name) {
+    return name.split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase();
+  }
+
+  function render() {
+    const all = Customers.all();
+    document.getElementById('stat-total').textContent = all.length;
+    document.getElementById('stat-vip').textContent = all.filter(c => c.totalSpent > 500).length;
+    const totalOrders = all.reduce((s, c) => s + (c.orders || 0), 0);
+    document.getElementById('stat-avg').textContent = all.length ? (totalOrders / all.length).toFixed(1) : '0';
+    document.getElementById('stat-revenue').textContent = fmt.money(all.reduce((s, c) => s + (c.totalSpent || 0), 0));
+
+    let list = all;
+    if (searchTerm) {
+      const t = searchTerm.toLowerCase();
+      list = list.filter(c =>
+        (c.name || '').toLowerCase().includes(t) ||
+        (c.phone || '').includes(t) ||
+        (c.document || '').includes(t)
+      );
+    }
+
+    const body = document.getElementById('clients-body');
+    if (list.length === 0) {
+      body.innerHTML = `<tr><td colspan="7"><div class="empty-state">
+        <i class="fa-solid fa-users"></i><h3>Sin clientes</h3><p>Aún no hay clientes registrados</p>
+      </div></td></tr>`;
+      return;
+    }
+    body.innerHTML = list.map(c => `
+      <tr>
+        <td>
+          <div class="client-cell">
+            <div class="client-avatar">${initials(c.name)}</div>
+            <div>
+              <div class="client-name">${c.name}</div>
+              <div class="client-doc">${c.document || 'Sin documento'}</div>
+            </div>
+          </div>
+        </td>
+        <td>${c.phone || '—'}</td>
+        <td>${c.email || '—'}</td>
+        <td><span class="badge badge-purple">${c.orders || 0} órdenes</span></td>
+        <td style="font-weight:600;">${fmt.money(c.totalSpent || 0)}</td>
+        <td style="color:var(--text-muted);">${c.lastVisit ? fmt.date(c.lastVisit) : '—'}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-sm btn-icon" onclick="editClient('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="deleteClient('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  window.openAdd = () => {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'Nuevo Cliente';
+    ['c-name','c-doc','c-phone','c-email'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('modal').classList.add('active');
+  };
+
+  window.editClient = (id) => {
+    const c = Customers.all().find(x => x.id === id);
+    if (!c) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = 'Editar Cliente';
+    document.getElementById('c-name').value = c.name || '';
+    document.getElementById('c-doc').value = c.document || '';
+    document.getElementById('c-phone').value = c.phone || '';
+    document.getElementById('c-email').value = c.email || '';
+    document.getElementById('modal').classList.add('active');
+  };
+
+  window.closeModal = () => document.getElementById('modal').classList.remove('active');
+
+  window.saveClient = () => {
+    const name = document.getElementById('c-name').value.trim();
+    if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+    const data = {
+      name,
+      document: document.getElementById('c-doc').value.trim(),
+      phone: document.getElementById('c-phone').value.trim(),
+      email: document.getElementById('c-email').value.trim(),
+    };
+    if (editingId) {
+      Customers.update(editingId, data);
+      showToast('Cliente actualizado', 'success');
+    } else {
+      Customers.add({ id: 'c' + uid(), orders: 0, totalSpent: 0, lastVisit: null, ...data });
+      showToast('Cliente registrado', 'success');
+    }
+    closeModal();
+    render();
+  };
+
+  window.deleteClient = (id) => {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    Customers.remove(id);
+    showToast('Cliente eliminado', 'success');
+    render();
+  };
+
+  document.getElementById('search-clients').addEventListener('input', e => {
+    searchTerm = e.target.value;
+    render();
+  });
+
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\xampp\\\\php\\\\php.exe\" -l \"c:\\\\xampp\\\\htdocs\\\\YAPEZ\\\\vistas\\\\nuevaorden.php\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db -e \"SELECT idcategoria, codigo, nombre, icono FROM categoria ORDER BY orden;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db -e \"UPDATE categoria SET icono='fa-glass-water' WHERE codigo='bebidas'; SELECT idcategoria, nombre, icono FROM categoria WHERE codigo='bebidas';\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db 2>&1)",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db -e \"SELECT codigo, nombre, tipo, auto_cobro FROM whatsapp_plantilla; SHOW COLUMNS FROM cliente LIKE 'whatsapp'; SHOW COLUMNS FROM cliente LIKE 'fecha_nacimiento'; SELECT codigo FROM permiso WHERE grupo='whatsapp';\")"
+    ]
+  }
+}

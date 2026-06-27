@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>RestoGest POS — Reportes</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .reports-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 1100px) { .reports-grid { grid-template-columns: 1fr; } }
+  .chart-container { position: relative; height: 280px; }
+  .top-product {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .top-product:last-child { border-bottom: 0; }
+  .tp-rank {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .tp-img { width: 38px; height: 38px; border-radius: 8px; background-size: cover; background-position: center; flex-shrink: 0; }
+  .tp-info { flex: 1; min-width: 0; }
+  .tp-name { font-size: 13px; font-weight: 600; }
+  .tp-qty { font-size: 11px; color: var(--text-muted); }
+  .tp-total { font-size: 13px; font-weight: 700; color: var(--primary); }
+
+  .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-pill {
+    padding: 8px 16px; border-radius: 20px;
+    background: var(--bg-white); border: 1px solid var(--border);
+    cursor: pointer; font-size: 12px; font-weight: 600;
+    color: var(--text-dark); font-family: inherit;
+  }
+  .filter-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="sidebar-mount"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Reportes</div>
+        <div class="page-subtitle">Análisis y métricas del negocio</div>
+      </div>
+      <button class="btn"><i class="fa-solid fa-file-pdf"></i> Generar PDF</button>
+    </div>
+
+    <div class="page-content">
+      <div class="filter-row">
+        <button class="filter-pill" data-range="hoy">Hoy</button>
+        <button class="filter-pill" data-range="semana">Últimos 7 días</button>
+        <button class="filter-pill active" data-range="mes">Este mes</button>
+        <button class="filter-pill" data-range="all">Todo el tiempo</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--green-light);color:var(--green);"><i class="fa-solid fa-money-bill-trend-up"></i></div>
+          <div class="stat-label">VENTAS TOTALES</div>
+          <div class="stat-value" id="r-sales">S/ 0</div>
+          <div class="stat-trend up" id="r-sales-trend">+0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:var(--primary-light);color:var(--primary);"><i class="fa-solid fa-receipt"></i></div>
+          <div class="stat-label">ÓRDENES</div>
+          <div class="stat-value" id="r-orders">0</div>
+          <div class="stat-trend up" id="r-orders-trend">+0%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fef3c7;color:var(--orange);"><i class="fa-solid fa-chart-pie"></i></div>
+          <div class="stat-label">TICKET PROMEDIO</div>
+          <div class="stat-value" id="r-avg">S/ 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dbeafe;color:var(--blue);"><i class="fa-solid fa-utensils"></i></div>
+          <div class="stat-label">PRODUCTOS VENDIDOS</div>
+          <div class="stat-value" id="r-items">0</div>
+        </div>
+      </div>
+
+      <div class="reports-grid">
+        <div class="card">
+          <div class="card-title">Ventas por día</div>
+          <div class="chart-container"><canvas id="sales-chart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Métodos de pago</div>
+          <div class="chart-container"><canvas id="pay-chart"></canvas></div>
+        </div>
+      </div>
+
+      <div class="reports-grid">
+        <div class="card">
+          <div class="card-title">Productos más vendidos</div>
+          <div id="top-products"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Tipo de orden</div>
+          <div class="chart-container"><canvas id="type-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="footer-mount"></div>
+  </main>
+</div>
+
+<script src="app.js"></script>
+<script>
+  initLayout('reportes');
+
+  let activeRange = 'mes';
+  let charts = {};
+
+  function isInRange(iso, range) {
+    const d = new Date(iso);
+    const now = new Date();
+    if (range === 'hoy') return d.toDateString() === now.toDateString();
+    if (range === 'semana') return (now - d) <= 7 * 86400000;
+    if (range === 'mes') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  }
+
+  function render() {
+    const all = Orders.all().filter(o => o.status === 'pagada');
+    const orders = all.filter(o => isInRange(o.createdAt, activeRange));
+    const sales = orders.reduce((s, o) => s + o.total, 0);
+    const items = orders.reduce((s, o) => s + o.items.reduce((x, i) => x + i.qty, 0), 0);
+
+    document.getElementById('r-sales').textContent = fmt.money(sales);
+    document.getElementById('r-orders').textContent = orders.length;
+    document.getElementById('r-avg').textContent = orders.length ? fmt.money(sales / orders.length) : 'S/ 0.00';
+    document.getElementById('r-items').textContent = items;
+
+    // Sales by day (últimos 7 días o agregación)
+    const days = [];
+    const dayLabels = [];
+    const dayCount = activeRange === 'hoy' ? 1 : (activeRange === 'semana' ? 7 : 30);
+    for (let i = dayCount - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toDateString();
+      days.push(orders.filter(o => new Date(o.createdAt).toDateString() === key).reduce((s, o) => s + o.total, 0));
+      dayLabels.push(d.toLocaleDateString('es-PE', { day: '2-digit', month: 'short' }));
+    }
+    drawSalesChart(dayLabels, days);
+
+    // Pay methods
+    const payMethods = ['efectivo', 'tarjeta', 'yape', 'transferencia'];
+    const payData = payMethods.map(m => orders.filter(o => o.paymentMethod === m).reduce((s, o) => s + o.total, 0));
+    drawPayChart(payMethods, payData);
+
+    // Top products
+    const productMap = {};
+    orders.forEach(o => o.items.forEach(i => {
+      if (!productMap[i.productId]) productMap[i.productId] = { name: i.name, qty: 0, total: 0 };
+      productMap[i.productId].qty += i.qty;
+      productMap[i.productId].total += i.price * i.qty;
+    }));
+    const topProducts = Object.entries(productMap).sort((a, b) => b[1].qty - a[1].qty).slice(0, 5);
+    const products = Store.get(Store.KEYS.products, []);
+
+    const tpEl = document.getElementById('top-products');
+    if (topProducts.length === 0) {
+      tpEl.innerHTML = `<div class="empty-state" style="padding:30px;"><i class="fa-solid fa-chart-bar"></i><p>Sin datos en este periodo</p></div>`;
+    } else {
+      tpEl.innerHTML = topProducts.map(([id, p], idx) => {
+        const prod = products.find(x => x.id === id);
+        return `
+          <div class="top-product">
+            <div class="tp-rank">${idx + 1}</div>
+            <div class="tp-img" style="background-image:url('${prod ? prod.img : ''}');background-color:#f3f4f6;"></div>
+            <div class="tp-info">
+              <div class="tp-name">${p.name}</div>
+              <div class="tp-qty">${p.qty} unidades vendidas</div>
+            </div>
+            <div class="tp-total">${fmt.money(p.total)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Order type
+    const types = ['dine_in', 'para_llevar', 'delivery'];
+    const typeData = types.map(t => orders.filter(o => o.type === t).length);
+    drawTypeChart(typeData);
+  }
+
+  function drawSalesChart(labels, data) {
+    if (charts.sales) charts.sales.destroy();
+    const ctx = document.getElementById('sales-chart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 280);
+    grad.addColorStop(0, 'rgba(91, 61, 245, 0.3)');
+    grad.addColorStop(1, 'rgba(91, 61, 245, 0)');
+    charts.sales = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ label: 'Ventas', data, fill: true, backgroundColor: grad, borderColor: '#5b3df5', borderWidth: 2.5, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#5b3df5', pointBorderColor: '#fff', pointBorderWidth: 2 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { font: { size: 11 }, color: '#6b7280' } }, x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#6b7280' } } } }
+    });
+  }
+
+  function drawPayChart(labels, data) {
+    if (charts.pay) charts.pay.destroy();
+    const ctx = document.getElementById('pay-chart').getContext('2d');
+    charts.pay = new Chart(ctx, {
+      type: 'doughnut',
+      data: { labels: ['Efectivo', 'Tarjeta', 'Yape/Plin', 'Transferencia'], datasets: [{ data, backgroundColor: ['#10b981', '#3b82f6', '#5b3df5', '#f59e0b'], borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 14, boxWidth: 10, boxHeight: 10, color: '#6b7280' } } }, cutout: '65%' }
+    });
+  }
+
+  function drawTypeChart(data) {
+    if (charts.type) charts.type.destroy();
+    const ctx = document.getElementById('type-chart').getContext('2d');
+    charts.type = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: ['Dine In', 'Para Llevar', 'Delivery'], datasets: [{ data, backgroundColor: ['#5b3df5', '#f59e0b', '#3b82f6'], borderRadius: 8, barThickness: 50 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: '#f3f4f6' }, ticks: { font: { size: 11 }, color: '#6b7280', stepSize: 1 } }, x: { grid: { display: false }, ticks: { font: { size: 12, weight: 600 }, color: '#1a1f36' } } } }
+    });
+  }
+
+  document.querySelectorAll('.filter-pill').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.filter-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    activeRange = b.dataset.range;
+    render();
+  }));
+
+  render();
+</script>
+</body>
+</html>

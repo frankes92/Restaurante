@@ -1,0 +1,6 @@
+﻿vendor/
+*.log
+bridge.log
+.env
+config.php
+certificado/

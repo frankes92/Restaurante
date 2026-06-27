@@ -1,0 +1,49 @@
+RewriteEngine On
+
+# Permitir URLs sin .php en /vistas/
+# Ej: /puerto_habana/vistas/mesas -> /puerto_habana/vistas/mesas.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
+
+# Bloquear acceso directo a archivos sensibles
+<FilesMatch "\.(sql|md|bak|env|ini|log|sh|json|lock|swp|orig|inc)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear cualquier archivo cuyo nombre empiece con punto (.git, .htaccess, .env, etc.)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso directo a las carpetas que solo deben usarse desde PHP.
+# Independiente del nombre del proyecto en la URL (config/, modelos/, etc.
+# en cualquier nivel). Refuerza los .htaccess propios de cada carpeta.
+RedirectMatch 403 (?i)/(config|modelos|db|wsdl|sfs|certificado|backups)/
+
+# bridge/bridge.php es un endpoint POST del POS; solo se bloquea el ejemplo de config
+<FilesMatch "config\.example\.php$">
+    Require all denied
+</FilesMatch>
+
+# Quitar listado de directorios y firma del servidor
+Options -Indexes -MultiViews
+ServerSignature Off
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    # CSP relajada (CDNs externos en uso). Endurecer cuando se sirvan localmente.
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com https://cdn.datatables.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https:; connect-src 'self'"
+    # No cachear paginas con datos de sesion
+    <FilesMatch "\.(php)$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
+# Limitar metodos HTTP
+<LimitExcept GET POST HEAD OPTIONS>
+    Require all denied
+</LimitExcept>

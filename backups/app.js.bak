@@ -1,0 +1,359 @@
+/* ============================================================
+   RESTOGEST POS - Core App (localStorage + componentes)
+   ============================================================ */
+
+const Store = {
+  KEYS: {
+    products: 'rg_products',
+    categories: 'rg_categories',
+    tables: 'rg_tables',
+    orders: 'rg_orders',
+    customers: 'rg_customers',
+    cashMovements: 'rg_cash_movements',
+    cashSession: 'rg_cash_session',
+    counter: 'rg_order_counter',
+  },
+  get(key, fallback = null) {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+    catch (e) { return fallback; }
+  },
+  set(key, value) { localStorage.setItem(key, JSON.stringify(value)); },
+  remove(key) { localStorage.removeItem(key); },
+  clearAll() { Object.values(this.KEYS).forEach(k => localStorage.removeItem(k)); }
+};
+
+/* ---------- SEED DATA (solo primera vez) ---------- */
+function seedDataIfNeeded() {
+  if (!Store.get(Store.KEYS.categories)) {
+    Store.set(Store.KEYS.categories, [
+      { id: 'all', name: 'Todas', icon: 'fa-table-cells', color: '#6b7280' },
+      { id: 'entradas', name: 'Entradas', icon: 'fa-leaf', color: '#10b981' },
+      { id: 'platos', name: 'Platos Fuertes', icon: 'fa-utensils', color: '#dc2626' },
+      { id: 'parrillas', name: 'Parrillas', icon: 'fa-fire', color: '#f59e0b' },
+      { id: 'pastas', name: 'Pastas', icon: 'fa-bowl-food', color: '#f59e0b' },
+      { id: 'pizzas', name: 'Pizzas', icon: 'fa-pizza-slice', color: '#dc2626' },
+      { id: 'bebidas', name: 'Bebidas', icon: 'fa-mug-saucer', color: '#10b981' },
+      { id: 'postres', name: 'Postres', icon: 'fa-ice-cream', color: '#f59e0b' },
+      { id: 'promociones', name: 'Promociones', icon: 'fa-tag', color: '#dc2626' },
+    ]);
+  }
+
+  if (!Store.get(Store.KEYS.products)) {
+    Store.set(Store.KEYS.products, [
+      { id: 'p1', name: 'Lomo Saltado', price: 28, category: 'platos', img: 'https://images.unsplash.com/photo-1626804475297-41608ea09aeb?w=400&q=80', popular: false, favorite: false },
+      { id: 'p2', name: 'Arroz con Mariscos', price: 32, category: 'platos', img: 'https://images.unsplash.com/photo-1633504581786-316c8002b1b9?w=400&q=80', popular: true, favorite: true },
+      { id: 'p3', name: 'Pizza Americana', price: 26, category: 'pizzas', img: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80', popular: false, favorite: false },
+      { id: 'p4', name: 'Hamburguesa Clásica', price: 24, category: 'platos', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80', popular: false, favorite: false },
+      { id: 'p5', name: 'Tallarín Saltado', price: 25, category: 'pastas', img: 'https://images.unsplash.com/photo-1552611052-33e04de081de?w=400&q=80', popular: false, favorite: false },
+      { id: 'p6', name: 'Parrilla Mixta', price: 58, category: 'parrillas', img: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80', popular: false, favorite: false },
+      { id: 'p7', name: 'Ensalada César', price: 18, category: 'entradas', img: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400&q=80', popular: false, favorite: false },
+      { id: 'p8', name: 'Ceviche Mixto', price: 10, category: 'entradas', img: 'https://images.unsplash.com/photo-1626200926749-cd28f0a47b21?w=400&q=80', popular: false, favorite: false },
+      { id: 'p9', name: 'Chicha Morada', price: 8, category: 'bebidas', img: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&q=80', popular: false, favorite: false },
+      { id: 'p10', name: 'Limonada', price: 8, category: 'bebidas', img: 'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&q=80', popular: false, favorite: false },
+      { id: 'p11', name: 'Inca Kola 500ml', price: 6, category: 'bebidas', img: 'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=400&q=80', popular: false, favorite: false },
+      { id: 'p12', name: 'Cheesecake', price: 16, category: 'postres', img: 'https://images.unsplash.com/photo-1567171466295-4afa63d45416?w=400&q=80', popular: false, favorite: false },
+    ]);
+  }
+
+  if (!Store.get(Store.KEYS.tables)) {
+    Store.set(Store.KEYS.tables, [
+      { id: 1, num: 1, capacity: 2, status: 'libre' },
+      { id: 2, num: 2, capacity: 4, status: 'ocupada' },
+      { id: 3, num: 3, capacity: 4, status: 'ocupada' },
+      { id: 4, num: 4, capacity: 6, status: 'ocupada' },
+      { id: 5, num: 5, capacity: 4, status: 'ocupada' },
+      { id: 6, num: 6, capacity: 6, status: 'libre' },
+      { id: 7, num: 7, capacity: 2, status: 'libre' },
+      { id: 8, num: 8, capacity: 4, status: 'ocupada' },
+      { id: 9, num: 9, capacity: 4, status: 'libre' },
+      { id: 10, num: 10, capacity: 6, status: 'libre' },
+      { id: 11, num: 11, capacity: 8, status: 'reservada' },
+      { id: 12, num: 12, capacity: 2, status: 'libre' },
+    ]);
+  }
+
+  if (!Store.get(Store.KEYS.customers)) {
+    Store.set(Store.KEYS.customers, [
+      { id: 'c1', name: 'María García', phone: '987654321', email: 'maria@email.com', document: '45678912', orders: 12, totalSpent: 458.50, lastVisit: '2026-04-28' },
+      { id: 'c2', name: 'Carlos Mendoza', phone: '912345678', email: 'carlos@email.com', document: '78912345', orders: 8, totalSpent: 312.00, lastVisit: '2026-05-02' },
+      { id: 'c3', name: 'Ana Torres', phone: '954321876', email: 'ana@email.com', document: '12345678', orders: 25, totalSpent: 1256.80, lastVisit: '2026-05-05' },
+      { id: 'c4', name: 'Luis Ramírez', phone: '998877665', email: 'luis@email.com', document: '87654321', orders: 3, totalSpent: 124.00, lastVisit: '2026-04-15' },
+      { id: 'c5', name: 'Sofía Vargas', phone: '923456789', email: 'sofia@email.com', document: '23456789', orders: 17, totalSpent: 689.30, lastVisit: '2026-05-06' },
+    ]);
+  }
+
+  if (!Store.get(Store.KEYS.orders)) {
+    const today = new Date();
+    const yesterday = new Date(today.getTime() - 86400000);
+    const twoDaysAgo = new Date(today.getTime() - 172800000);
+    Store.set(Store.KEYS.orders, [
+      {
+        id: '00058', table: 5, type: 'dine_in', status: 'en_curso',
+        items: [
+          { productId: 'p1', name: 'Lomo Saltado', qty: 1, price: 28, note: 'A punto' },
+          { productId: 'p2', name: 'Arroz con Mariscos', qty: 1, price: 32, note: 'Sin picante' },
+          { productId: 'p9', name: 'Chicha Morada', qty: 2, price: 8, note: 'Vaso grande' },
+          { productId: 'p7', name: 'Ensalada César', qty: 1, price: 18, note: 'Extra pollo' },
+        ],
+        subtotal: 94, tax: 16.92, total: 110.92,
+        paymentMethod: null,
+        customerId: null,
+        createdAt: today.toISOString(),
+        waiter: 'Juan Pérez'
+      },
+      {
+        id: '00057', table: 2, type: 'dine_in', status: 'pagada',
+        items: [
+          { productId: 'p6', name: 'Parrilla Mixta', qty: 1, price: 58, note: '' },
+          { productId: 'p11', name: 'Inca Kola 500ml', qty: 2, price: 6, note: '' },
+        ],
+        subtotal: 70, tax: 12.6, total: 82.60,
+        paymentMethod: 'efectivo',
+        customerId: 'c1',
+        createdAt: yesterday.toISOString(),
+        waiter: 'Juan Pérez'
+      },
+      {
+        id: '00056', table: null, type: 'delivery', status: 'pagada',
+        items: [
+          { productId: 'p3', name: 'Pizza Americana', qty: 2, price: 26, note: '' },
+          { productId: 'p10', name: 'Limonada', qty: 2, price: 8, note: '' },
+        ],
+        subtotal: 68, tax: 12.24, total: 80.24,
+        paymentMethod: 'yape',
+        customerId: 'c3',
+        createdAt: yesterday.toISOString(),
+        waiter: 'Juan Pérez'
+      },
+      {
+        id: '00055', table: 8, type: 'dine_in', status: 'pagada',
+        items: [
+          { productId: 'p1', name: 'Lomo Saltado', qty: 2, price: 28, note: '' },
+          { productId: 'p9', name: 'Chicha Morada', qty: 2, price: 8, note: '' },
+          { productId: 'p12', name: 'Cheesecake', qty: 1, price: 16, note: '' },
+        ],
+        subtotal: 88, tax: 15.84, total: 103.84,
+        paymentMethod: 'tarjeta',
+        customerId: 'c2',
+        createdAt: twoDaysAgo.toISOString(),
+        waiter: 'Juan Pérez'
+      },
+      {
+        id: '00054', table: null, type: 'para_llevar', status: 'pagada',
+        items: [
+          { productId: 'p5', name: 'Tallarín Saltado', qty: 1, price: 25, note: '' },
+        ],
+        subtotal: 25, tax: 4.5, total: 29.50,
+        paymentMethod: 'efectivo',
+        customerId: null,
+        createdAt: twoDaysAgo.toISOString(),
+        waiter: 'Juan Pérez'
+      },
+    ]);
+  }
+
+  if (!Store.get(Store.KEYS.counter)) {
+    Store.set(Store.KEYS.counter, 59);
+  }
+
+  if (!Store.get(Store.KEYS.cashSession)) {
+    Store.set(Store.KEYS.cashSession, {
+      open: true,
+      openedAt: new Date().toISOString().slice(0,10) + 'T08:00:00',
+      initialAmount: 200,
+      caja: 'AP-001',
+      turno: 'Mañana',
+      cashier: 'Juan Pérez'
+    });
+  }
+
+  if (!Store.get(Store.KEYS.cashMovements)) {
+    Store.set(Store.KEYS.cashMovements, [
+      { id: 'm1', type: 'apertura', amount: 200, note: 'Apertura de caja', createdAt: new Date().toISOString() },
+    ]);
+  }
+}
+
+/* ---------- HELPERS ---------- */
+const fmt = {
+  money: (n) => 'S/ ' + Number(n).toFixed(2),
+  date: (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  },
+  time: (iso) => {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' });
+  },
+  datetime: (iso) => `${fmt.date(iso)} ${fmt.time(iso)}`,
+};
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function nextOrderId() {
+  let counter = Store.get(Store.KEYS.counter, 1);
+  counter += 1;
+  Store.set(Store.KEYS.counter, counter);
+  return String(counter).padStart(5, '0');
+}
+
+function showToast(message, type = '') {
+  let el = document.querySelector('.toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'toast';
+    document.body.appendChild(el);
+  }
+  el.className = 'toast ' + type;
+  el.innerHTML = `<i class="fa-solid fa-${type === 'error' ? 'circle-xmark' : 'circle-check'}"></i> ${message}`;
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+/* ---------- COMPONENTS: SIDEBAR & FOOTER ---------- */
+function renderSidebar(activePage) {
+  const items = [
+    { id: 'index', icon: 'fa-regular fa-file-lines', label: 'Nueva Orden', href: 'index.html' },
+    { id: 'mesas', icon: 'fa-solid fa-table-cells-large', label: 'Mesas', href: 'mesas.html' },
+    { id: 'pedidos', icon: 'fa-solid fa-receipt', label: 'Pedidos', href: 'pedidos.html' },
+    { id: 'clientes', icon: 'fa-regular fa-user', label: 'Clientes', href: 'clientes.html' },
+    { id: 'historial', icon: 'fa-regular fa-clock', label: 'Historial', href: 'historial.html' },
+    { id: 'caja', icon: 'fa-solid fa-cash-register', label: 'Caja', href: 'caja.html' },
+    { id: 'reportes', icon: 'fa-regular fa-chart-bar', label: 'Reportes', href: 'reportes.html' },
+    { id: 'mas', icon: 'fa-solid fa-ellipsis', label: 'Más Opciones', href: '#' },
+  ];
+
+  return `
+    <aside class="sidebar">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">🍲</div>
+        <div class="logo-text"><span>Resto<em>Gest</em></span><span class="logo-pos">POS</span></div>
+      </a>
+      <nav class="nav">
+        ${items.map(it => `
+          <a href="${it.href}" class="nav-item ${it.id === activePage ? 'active' : ''}">
+            <i class="${it.icon}"></i> ${it.label}
+          </a>
+        `).join('')}
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">JP</div>
+          <div>
+            <div class="user-name">Juan Pérez</div>
+            <div class="user-role">Cajero</div>
+          </div>
+        </div>
+        <div class="branch-selector">
+          <div>
+            <div class="branch-name">Sucursal Centro</div>
+            <div class="branch-status">Abierta</div>
+          </div>
+          <i class="fa-solid fa-chevron-down" style="font-size:11px;color:#9ca3af;"></i>
+        </div>
+        <a href="#" class="logout"><i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión</a>
+      </div>
+    </aside>
+  `;
+}
+
+function renderFooter() {
+  const session = Store.get(Store.KEYS.cashSession, {});
+  const now = new Date();
+  return `
+    <div class="footer">
+      <div class="footer-item">Caja: ${session.caja || 'AP-001'}</div>
+      <div class="footer-divider"></div>
+      <div class="footer-item">Apertura: ${session.openedAt ? fmt.datetime(session.openedAt) : '—'}</div>
+      <div class="footer-divider"></div>
+      <div class="footer-item">Turno: ${session.turno || 'Mañana'}</div>
+      <div class="footer-right">
+        <div class="footer-item">Conexión <span class="online"><i class="fa-solid fa-wifi"></i> En línea</span></div>
+        <div class="footer-divider"></div>
+        <div class="footer-item"><i class="fa-regular fa-clock"></i> <span id="footer-clock">${fmt.time(now)}</span> &nbsp; ${fmt.date(now)}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ---------- INITIALIZATION ---------- */
+function initLayout(activePage) {
+  seedDataIfNeeded();
+  const sidebarMount = document.getElementById('sidebar-mount');
+  const footerMount = document.getElementById('footer-mount');
+  if (sidebarMount) sidebarMount.outerHTML = renderSidebar(activePage);
+  if (footerMount) footerMount.outerHTML = renderFooter();
+
+  // Reloj
+  setInterval(() => {
+    const clock = document.getElementById('footer-clock');
+    if (clock) clock.textContent = fmt.time(new Date());
+  }, 30000);
+}
+
+/* ---------- CRUD HELPERS ---------- */
+const Orders = {
+  all: () => Store.get(Store.KEYS.orders, []),
+  add: (order) => {
+    const list = Orders.all();
+    list.unshift(order);
+    Store.set(Store.KEYS.orders, list);
+  },
+  update: (id, patch) => {
+    const list = Orders.all();
+    const idx = list.findIndex(o => o.id === id);
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], ...patch };
+      Store.set(Store.KEYS.orders, list);
+    }
+  },
+  remove: (id) => {
+    const list = Orders.all().filter(o => o.id !== id);
+    Store.set(Store.KEYS.orders, list);
+  },
+};
+
+const Customers = {
+  all: () => Store.get(Store.KEYS.customers, []),
+  add: (c) => { const l = Customers.all(); l.unshift(c); Store.set(Store.KEYS.customers, l); },
+  update: (id, patch) => {
+    const l = Customers.all();
+    const i = l.findIndex(c => c.id === id);
+    if (i >= 0) { l[i] = { ...l[i], ...patch }; Store.set(Store.KEYS.customers, l); }
+  },
+  remove: (id) => Store.set(Store.KEYS.customers, Customers.all().filter(c => c.id !== id)),
+};
+
+const Tables = {
+  all: () => Store.get(Store.KEYS.tables, []),
+  update: (id, patch) => {
+    const l = Tables.all();
+    const i = l.findIndex(t => t.id === id);
+    if (i >= 0) { l[i] = { ...l[i], ...patch }; Store.set(Store.KEYS.tables, l); }
+  },
+  add: (t) => { const l = Tables.all(); l.push(t); Store.set(Store.KEYS.tables, l); },
+  remove: (id) => Store.set(Store.KEYS.tables, Tables.all().filter(t => t.id !== id)),
+};
+
+const Cash = {
+  movements: () => Store.get(Store.KEYS.cashMovements, []),
+  addMovement: (m) => {
+    const l = Cash.movements();
+    l.unshift({ id: uid(), createdAt: new Date().toISOString(), ...m });
+    Store.set(Store.KEYS.cashMovements, l);
+  },
+  session: () => Store.get(Store.KEYS.cashSession, {}),
+  setSession: (s) => Store.set(Store.KEYS.cashSession, s),
+};
+
+/* expose globally for inline HTML calls */
+window.Store = Store;
+window.Orders = Orders;
+window.Customers = Customers;
+window.Tables = Tables;
+window.Cash = Cash;
+window.fmt = fmt;
+window.showToast = showToast;
+window.uid = uid;
+window.nextOrderId = nextOrderId;
+window.initLayout = initLayout;
