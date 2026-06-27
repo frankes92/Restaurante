@@ -1499,8 +1499,9 @@ html, body { background: #fff !important; padding: 0 !important; margin: 0 !impo
         <?php endif; ?>
     </div>
 
-    <!-- Disclaimer para tickets internos -->
-    <?php if (!$compFiscal && in_array($orden['tipo_comprobante'], ['ticket','nota_venta'], true)): ?>
+    <!-- Disclaimer para tickets internos (configurable: empresa.mostrar_glosa_interna) -->
+    <?php if (!$compFiscal && in_array($orden['tipo_comprobante'], ['ticket','nota_venta'], true)
+              && (int)($emp['mostrar_glosa_interna'] ?? 1) === 1): ?>
         <div class="disclaimer-int">
             Documento interno de uso comercial.<br>
             No constituye comprobante de pago electrónico SUNAT.

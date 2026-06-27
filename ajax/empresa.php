@@ -32,6 +32,10 @@ switch ($op) {
         if (isset($_POST['envio_sunat_automatico'])) {
             $datos['envio_sunat_automatico'] = $_POST['envio_sunat_automatico'] ? 1 : 0;
         }
+        // Toggle: mostrar glosa interna en nota de venta/ticket (checkbox: 1 o 0)
+        if (isset($_POST['mostrar_glosa_interna'])) {
+            $datos['mostrar_glosa_interna'] = $_POST['mostrar_glosa_interna'] ? 1 : 0;
+        }
         // Sin clave_sol vacia: no actualizar
         if (isset($datos['clave_sol']) && $datos['clave_sol'] === '') unset($datos['clave_sol']);
         // Validar formato_comprobante

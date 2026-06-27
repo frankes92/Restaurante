@@ -25,7 +25,7 @@ class Empresa
                    'departamento','provincia','distrito','telefono','correo','web',
                    'usuario_sol','clave_sol','ambiente',
                    'tasa_igv','simbolo_moneda','codigo_moneda',
-                   'logo','formato_comprobante','envio_sunat_automatico',
+                   'logo','formato_comprobante','envio_sunat_automatico','mostrar_glosa_interna',
                    'yape_qr','plin_qr'];
 
         $sets = [];

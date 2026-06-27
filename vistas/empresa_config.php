@@ -203,6 +203,24 @@ require __DIR__ . '/template/head.php';
                         </label>
                     </div>
 
+                    <!-- Glosa interna en nota de venta / ticket -->
+                    <div style="margin-top:16px;background:var(--bg-light);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+                        <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+                            <input type="checkbox" id="mostrar_glosa_interna" style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+                            <span>
+                                <span style="font-weight:700;font-size:14px;color:var(--text-dark);">
+                                    <i class="fa-solid fa-receipt" style="color:var(--primary);"></i>
+                                    Mostrar glosa interna en nota de venta / ticket
+                                </span>
+                                <small style="display:block;color:var(--text-muted);font-size:12px;margin-top:3px;">
+                                    Si está activo, al final de la nota de venta/ticket aparece el texto
+                                    “Documento interno de uso comercial. No constituye comprobante de pago electrónico SUNAT.”
+                                    Desactívalo para que no se imprima.
+                                </small>
+                            </span>
+                        </label>
+                    </div>
+
                     <div style="margin-top:18px;text-align:right;">
                         <button class="btn btn-primary" type="submit"><i class="fa-solid fa-save"></i> Guardar</button>
                     </div>
@@ -347,6 +365,8 @@ $(function () {
         CAMPOS.forEach(k => $('#' + k).val(e[k] || ''));
         selectFormat(e.formato_comprobante || 'ticket');
         $('#envio_sunat_automatico').prop('checked', Number(e.envio_sunat_automatico) === 1);
+        // Por defecto activa (si la empresa es antigua y no trae el campo, se muestra).
+        $('#mostrar_glosa_interna').prop('checked', Number(e.mostrar_glosa_interna) !== 0);
         pintarLogo(e.logo || '');
         pintarQr('yape', e.yape_qr || '');
         pintarQr('plin', e.plin_qr || '');
@@ -516,6 +536,7 @@ $(function () {
         if (!payload.clave_sol) delete payload.clave_sol;
         CAMPOS.forEach(k => { payload[k] = $('#' + k).val(); });
         payload.envio_sunat_automatico = $('#envio_sunat_automatico').is(':checked') ? 1 : 0;
+        payload.mostrar_glosa_interna  = $('#mostrar_glosa_interna').is(':checked') ? 1 : 0;
         $.post('../ajax/empresa.php?op=editar', payload, function (r) {
             if (r.ok) {
                 showToast('Empresa actualizada — recargando...', 'success');
