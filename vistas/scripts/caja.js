@@ -3,6 +3,7 @@
 let movementType = 'ingreso';
 let sesionActual = null;
 let dt = null;
+let dtc = null;   // DataTable del historial de cierres
 
 // Denominaciones tipicas (Peru). Para otras monedas, configurar en empresa.
 const DENOMS = [
@@ -28,6 +29,9 @@ const MOVE_STYLES = {
 };
 
 async function load() {
+    // El historial de cierres se muestra siempre (haya o no caja abierta).
+    cargarHistorialCierres();
+
     sesionActual = await API.cajaSesion();
     if (!sesionActual || !sesionActual.idsesion) {
         document.getElementById('cash-subtitle').textContent = 'No hay caja abierta — abre una sesión para empezar a vender';
@@ -298,6 +302,55 @@ window.confirmarArqueo = async () => {
 window.imprimirArqueoSesion = (idsesion) => {
     window.open('arqueo_print.php?idsesion=' + idsesion, '_blank', 'width=420,height=720');
 };
+
+// Historial de cierres: tabla con todas las sesiones cerradas + botón de reimprimir.
+async function cargarHistorialCierres() {
+    const data = await Http.get('../ajax/caja.php?op=historialCierres') || [];
+    const rows = Array.isArray(data) ? data : [];
+    if (dtc) { dtc.clear().rows.add(rows).draw(); return; }
+
+    dtc = $('#tbl-cierres').DataTable({
+        data: rows,
+        responsive: true,
+        columns: [
+            { data: 'idsesion', render: v => '#' + v },
+            { data: null, render: r => `${(r.caja_codigo || '').toString()}${r.turno ? ' · ' + r.turno : ''}` },
+            { data: 'fecha_apertura', render: (v, type) => {
+                // Para ordenar/buscar usa el valor crudo (YYYY-MM-DD HH:MM:SS, ordena bien);
+                // para mostrar, el formato dd/mm/aaaa hh:mm.
+                if (type === 'sort' || type === 'type') return v || '';
+                return v ? (fmt.date(v) + ' ' + fmt.time(v)) : '—';
+            }},
+            { data: 'fecha_cierre',   render: (v, type) => {
+                if (type === 'sort' || type === 'type') return v || '';
+                return v ? (fmt.date(v) + ' ' + fmt.time(v)) : '—';
+            }},
+            { data: null, render: r => {
+                const n = (r.cajero_nombre || '').trim();
+                return n !== '' ? n : (r.cajero_libre || '—');
+            }},
+            { data: 'ventas',       className: 'text-right', render: v => fmt.money(v) },
+            { data: 'monto_cierre', className: 'text-right', render: v => (v == null ? '—' : fmt.money(v)) },
+            { data: 'diferencia',   className: 'text-right', render: v => {
+                if (v == null) return '<span style="color:#9ca3af;">—</span>';
+                const n = Number(v);
+                const color = n === 0 ? 'var(--green)' : (n > 0 ? 'var(--blue)' : 'var(--red)');
+                return `<span style="font-weight:700;color:${color};">${fmt.money(n)}</span>`;
+            }},
+            { data: 'idsesion', orderable: false, render: v =>
+                `<button class="btn btn-sm" onclick="imprimirArqueoSesion(${v})"><i class="fa-solid fa-print"></i> Imprimir</button>` }
+        ],
+        order: [[2, 'desc']],   // por FECHA DE APERTURA, de la más reciente a la más antigua
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        dom: 'Bfrtip',
+        buttons: [
+            { extend: 'excelHtml5', text: '<i class="fa-solid fa-file-excel"></i> Excel', title: 'Cierres de caja' },
+            { extend: 'pdfHtml5',   text: '<i class="fa-solid fa-file-pdf"></i> PDF',   title: 'Cierres de caja' },
+            { extend: 'print',      text: '<i class="fa-solid fa-print"></i> Imprimir' }
+        ]
+    });
+}
 
 window.reimprimirArqueo = () => {
     if (!sesionActual || !sesionActual.idsesion) {

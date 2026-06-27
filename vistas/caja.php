@@ -106,6 +106,28 @@ require __DIR__ . '/template/head.php';
                     </table>
                 </div>
             </div>
+
+            <!-- Historial de cierres de caja -->
+            <div class="card" style="padding:16px;margin-top:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                    <div style="font-size:14px;font-weight:700;"><i class="fa-solid fa-clock-rotate-left" style="color:var(--primary);"></i> Historial de cierres de caja</div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table id="tbl-cierres" class="data-table" style="width:100%;">
+                        <thead><tr>
+                            <th>Sesión</th>
+                            <th>Caja / Turno</th>
+                            <th>Apertura</th>
+                            <th>Cierre</th>
+                            <th>Cajero</th>
+                            <th style="text-align:right;">Ventas</th>
+                            <th style="text-align:right;">Monto cierre</th>
+                            <th style="text-align:right;">Diferencia</th>
+                            <th></th>
+                        </tr></thead>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <?php require __DIR__ . '/template/footer.php'; ?>

@@ -61,7 +61,16 @@ $und = function ($n) {
     $n = (float)$n;
     return (floor($n) == $n) ? (string)(int)$n : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.');
 };
-$totalConsumo = (float)$consolidado['comidas'] + (float)$consolidado['bebidas'];
+// Nombre de presentación limpio (General si es genérica/sin nombre)
+$presNom = function ($n) {
+    $n = trim((string)$n);
+    return ($n === '' || $n === '—' || strtolower($n) === 'normal') ? 'General' : $n;
+};
+$totalConsumo      = (float)$consolidado['comidas'] + (float)$consolidado['bebidas'];
+$totalConsumoMonto = (float)($consolidado['comidas_monto'] ?? 0) + (float)($consolidado['bebidas_monto'] ?? 0);
+// Cortesías (lo regalado): cantidad y valor
+$cortCant  = (float)($consolidado['comidas_cort_cant'] ?? 0) + (float)($consolidado['bebidas_cort_cant'] ?? 0);
+$cortMonto = (float)($consolidado['comidas_cort_monto'] ?? 0) + (float)($consolidado['bebidas_cort_monto'] ?? 0);
 
 $estado = $diferencia == 0.0 ? 'CUADRA' : ($diferencia > 0 ? 'SOBRANTE' : 'FALTANTE');
 $colorEstado = $diferencia == 0.0 ? '#10b981' : ($diferencia > 0 ? '#2563eb' : '#dc2626');
@@ -235,22 +244,52 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font
     <div class="section-title">CONSOLIDADO DEL DÍA</div>
     <div class="dash-line"></div>
 
-    <!-- General: comidas vs bebidas (incluye cortesías) -->
-    <div class="tbl-head" style="grid-template-columns:1fr 70px;">
-        <span>TIPO</span><span style="text-align:right;">CANT.</span>
+    <!-- General: comidas vs bebidas. TOTAL = dinero vendido · CANT = unidades (incluye cortesías) -->
+    <div class="tbl-head" style="grid-template-columns:1fr 82px 56px;">
+        <span>TIPO</span><span style="text-align:right;">TOTAL</span><span style="text-align:right;">CANT.</span>
     </div>
-    <div class="tbl-row" style="grid-template-columns:1fr 70px;">
+    <div class="tbl-row" style="grid-template-columns:1fr 82px 56px;">
         <span>🍽 Platos de comida</span>
+        <span class="amt"><?php echo $fmt($consolidado['comidas_monto'] ?? 0); ?></span>
         <span class="amt"><?php echo $und($consolidado['comidas']); ?> und</span>
     </div>
-    <div class="tbl-row" style="grid-template-columns:1fr 70px;">
+    <div class="tbl-row" style="grid-template-columns:1fr 82px 56px;">
         <span>🥤 Bebidas</span>
+        <span class="amt"><?php echo $fmt($consolidado['bebidas_monto'] ?? 0); ?></span>
         <span class="amt"><?php echo $und($consolidado['bebidas']); ?> und</span>
     </div>
-    <div class="tbl-total" style="grid-template-columns:1fr 70px;">
+    <div class="tbl-total" style="grid-template-columns:1fr 82px 56px;">
         <span>TOTAL CONSUMO</span>
+        <span class="amt"><?php echo $fmt($totalConsumoMonto); ?></span>
         <span class="amt"><?php echo $und($totalConsumo); ?> und</span>
     </div>
+
+    <!-- Cortesías: lo regalado (valor en dinero) y la cantidad -->
+    <?php if ($cortCant > 0): ?>
+    <div class="dash-line"></div>
+    <div class="tbl-head" style="grid-template-columns:1fr 82px 56px;">
+        <span>CORTESÍAS</span><span style="text-align:right;">VALOR</span><span style="text-align:right;">CANT.</span>
+    </div>
+    <?php if (($consolidado['comidas_cort_cant'] ?? 0) > 0): ?>
+    <div class="tbl-row" style="grid-template-columns:1fr 82px 56px;">
+        <span>🍽 Platos cortesía</span>
+        <span class="amt"><?php echo $fmt($consolidado['comidas_cort_monto'] ?? 0); ?></span>
+        <span class="amt"><?php echo $und($consolidado['comidas_cort_cant'] ?? 0); ?> und</span>
+    </div>
+    <?php endif; ?>
+    <?php if (($consolidado['bebidas_cort_cant'] ?? 0) > 0): ?>
+    <div class="tbl-row" style="grid-template-columns:1fr 82px 56px;">
+        <span>🥤 Bebidas cortesía</span>
+        <span class="amt"><?php echo $fmt($consolidado['bebidas_cort_monto'] ?? 0); ?></span>
+        <span class="amt"><?php echo $und($consolidado['bebidas_cort_cant'] ?? 0); ?> und</span>
+    </div>
+    <?php endif; ?>
+    <div class="tbl-total" style="grid-template-columns:1fr 82px 56px;">
+        <span>TOTAL CORTESÍAS</span>
+        <span class="amt"><?php echo $fmt($cortMonto); ?></span>
+        <span class="amt"><?php echo $und($cortCant); ?> und</span>
+    </div>
+    <?php endif; ?>
 
     <?php if (!empty($consolidado['bebidas_detalle'])): ?>
         <div class="dash-line"></div>
@@ -263,6 +302,15 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font
                 <span><?php echo $h($b['nombre']); ?></span>
                 <span class="amt"><?php echo $und($b['cantidad']); ?> und</span>
             </div>
+            <?php // Sub-desglose por presentación (solo si tiene más de una) ?>
+            <?php if (!empty($b['presentaciones']) && count($b['presentaciones']) > 1): ?>
+                <?php foreach ($b['presentaciones'] as $pr): ?>
+                <div class="tbl-row" style="grid-template-columns:1fr 60px;border-bottom:0;padding-top:1px;padding-bottom:1px;">
+                    <span style="padding-left:12px;color:#6b7280;font-size:10px;">↳ <?php echo $h($presNom($pr['nombre'])); ?></span>
+                    <span class="amt" style="color:#6b7280;font-size:10px;"><?php echo $und($pr['cantidad']); ?> und</span>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         <?php endforeach; ?>
         <div class="tbl-total" style="grid-template-columns:1fr 60px;">
             <span>TOTAL BEBIDAS</span>

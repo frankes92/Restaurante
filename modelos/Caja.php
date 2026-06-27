@@ -241,14 +241,32 @@ class Caja
     {
         $ids = (int)$idsesion;
 
-        // Totales generales: comidas vs bebidas (en unidades).
+        // Totales generales: comidas vs bebidas.
+        //  - CANT (unidades): incluye cortesías (como hasta ahora).
+        //  - MONTO (dinero): solo lo VENDIDO (cortesia=0; las cortesías valen 0 en caja).
+        //  - CORTESÍAS: cantidad y su VALOR (cantidad*precio, lo que se regaló).
         // Los TAPERS (categoría/nombre con "TAPER") NO cuentan como comida ni bebida.
         $gen = dbFila(
             "SELECT
                 COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
                                       WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN d.cantidad ELSE 0 END),0) AS bebidas,
                 COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
-                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN 0 ELSE d.cantidad END),0) AS comidas
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN 0 ELSE d.cantidad END),0) AS comidas,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' AND d.cortesia=0 THEN d.subtotal ELSE 0 END),0) AS bebidas_monto,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN 0
+                                      WHEN d.cortesia=0 THEN d.subtotal ELSE 0 END),0) AS comidas_monto,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' AND d.cortesia=1 THEN d.cantidad ELSE 0 END),0) AS bebidas_cort_cant,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN 0
+                                      WHEN d.cortesia=1 THEN d.cantidad ELSE 0 END),0) AS comidas_cort_cant,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' AND d.cortesia=1 THEN d.cantidad*d.precio ELSE 0 END),0) AS bebidas_cort_monto,
+                COALESCE(SUM(CASE WHEN (UPPER(c.nombre) LIKE '%TAPER%' OR UPPER(p.nombre) LIKE '%TAPER%') THEN 0
+                                      WHEN UPPER(c.nombre) LIKE '%BEBIDA%' THEN 0
+                                      WHEN d.cortesia=1 THEN d.cantidad*d.precio ELSE 0 END),0) AS comidas_cort_monto
              FROM orden_detalle d
              JOIN orden o     ON o.idorden = d.idorden
              JOIN producto p  ON p.idproducto = d.idproducto
@@ -257,27 +275,53 @@ class Caja
             'i', [$ids]
         );
 
-        // Desglose por bebida
+        // Desglose por bebida + sub-desglose por PRESENTACIÓN (variante).
+        // Se agrupa por producto y presentación; luego se anida en PHP.
         $rs = dbQuery(
-            "SELECT p.nombre, COALESCE(SUM(d.cantidad),0) AS cantidad
+            "SELECT p.idproducto, p.nombre AS producto,
+                    COALESCE(NULLIF(TRIM(pp.nombre),''),'—') AS presentacion,
+                    COALESCE(SUM(d.cantidad),0) AS cantidad
              FROM orden_detalle d
              JOIN orden o     ON o.idorden = d.idorden
              JOIN producto p  ON p.idproducto = d.idproducto
+             LEFT JOIN producto_precio pp ON pp.idprecio = d.idprecio
              LEFT JOIN categoria c ON c.idcategoria = p.idcategoria
              WHERE o.idsesion = ? AND o.estado = 'pagada' AND d.estado <> 'anulado'
                    AND UPPER(c.nombre) LIKE '%BEBIDA%'
-             GROUP BY p.idproducto, p.nombre
+             GROUP BY p.idproducto, p.nombre, COALESCE(NULLIF(TRIM(pp.nombre),''),'—')
              HAVING cantidad > 0
-             ORDER BY cantidad DESC, p.nombre ASC",
+             ORDER BY p.nombre ASC, cantidad DESC",
             'i', [$ids]
         );
-        $bebidasDetalle = [];
-        if ($rs) { while ($r = $rs->fetch_assoc()) { $bebidasDetalle[] = $r; } }
+        // Anidar: cada producto con su total y la lista de sus presentaciones.
+        $mapBeb = [];
+        if ($rs) {
+            while ($r = $rs->fetch_assoc()) {
+                $pid = (int)$r['idproducto'];
+                if (!isset($mapBeb[$pid])) {
+                    $mapBeb[$pid] = ['nombre' => $r['producto'], 'cantidad' => 0.0, 'presentaciones' => []];
+                }
+                $mapBeb[$pid]['cantidad'] += (float)$r['cantidad'];
+                $mapBeb[$pid]['presentaciones'][] = [
+                    'nombre'   => $r['presentacion'],
+                    'cantidad' => (float)$r['cantidad'],
+                ];
+            }
+        }
+        $bebidasDetalle = array_values($mapBeb);
+        // Más vendidas primero (mismo orden que antes)
+        usort($bebidasDetalle, function ($a, $b) { return $b['cantidad'] <=> $a['cantidad']; });
 
         return [
-            'comidas'         => (float)($gen['comidas'] ?? 0),
-            'bebidas'         => (float)($gen['bebidas'] ?? 0),
-            'bebidas_detalle' => $bebidasDetalle,
+            'comidas'            => (float)($gen['comidas'] ?? 0),
+            'bebidas'            => (float)($gen['bebidas'] ?? 0),
+            'comidas_monto'      => (float)($gen['comidas_monto'] ?? 0),
+            'bebidas_monto'      => (float)($gen['bebidas_monto'] ?? 0),
+            'comidas_cort_cant'  => (float)($gen['comidas_cort_cant'] ?? 0),
+            'bebidas_cort_cant'  => (float)($gen['bebidas_cort_cant'] ?? 0),
+            'comidas_cort_monto' => (float)($gen['comidas_cort_monto'] ?? 0),
+            'bebidas_cort_monto' => (float)($gen['bebidas_cort_monto'] ?? 0),
+            'bebidas_detalle'    => $bebidasDetalle,
         ];
     }
 
@@ -315,6 +359,31 @@ class Caja
              WHERE a.idsesion = ?
              ORDER BY a.idarqueo DESC",
             'i', [(int)$idsesion]
+        );
+    }
+
+    /**
+     * Historial de CIERRES de caja: todas las sesiones ya cerradas, con sus
+     * datos de apertura/cierre, cajero, total de ventas y la diferencia del
+     * último arqueo. Permite reimprimir el consolidado/arqueo de cada fecha.
+     */
+    public function historialCierres()
+    {
+        return dbQuery(
+            "SELECT s.idsesion, s.caja_codigo, s.turno,
+                    s.fecha_apertura, s.fecha_cierre,
+                    s.monto_inicial, s.monto_cierre,
+                    TRIM(CONCAT(COALESCE(u.nombre,''),' ',COALESCE(u.apellidos,''))) AS cajero_nombre,
+                    s.cajero AS cajero_libre,
+                    (SELECT a.diferencia FROM caja_arqueo a
+                       WHERE a.idsesion = s.idsesion ORDER BY a.idarqueo DESC LIMIT 1) AS diferencia,
+                    COALESCE((SELECT SUM(m.monto) FROM caja_movimiento m
+                       WHERE m.idsesion = s.idsesion AND m.tipo = 'venta'),0) AS ventas
+             FROM caja_sesion s
+             LEFT JOIN usuario u ON u.idusuario = s.idusuario
+             WHERE s.abierta = 0
+             ORDER BY s.fecha_apertura DESC, s.idsesion DESC",
+            '', []
         );
     }
 }

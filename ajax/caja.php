@@ -119,6 +119,14 @@ switch ($op) {
         jsonResponse($data);
         break;
 
+    case 'historialCierres':
+        // Historial de todas las sesiones cerradas (para reimprimir arqueo/consolidado).
+        $rs = $caja->historialCierres();
+        $data = [];
+        while ($r = $rs->fetch_assoc()) { $data[] = $r; }
+        jsonResponse($data);
+        break;
+
     case 'arqueoCerrarConSesion':
         // Hace arqueo + cierre de caja en una sola operacion atomica
         requirePermiso('arqueo_caja');
