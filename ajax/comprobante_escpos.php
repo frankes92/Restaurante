@@ -252,13 +252,17 @@ function construirEscpos()
             foreach (ep_wrapArr('Hash: ' . $compFiscal['xml_hash'], $cols) as $ln) $out .= ep_txt($ln) . "\n";
         }
     } else {
-        // Documento interno (no fiscal): nota en recuadro
-        $out .= ep_left();
-        $out .= ep_box([
-            'Documento interno de uso comercial.',
-            'No constituye comprobante de pago',
-            'electronico SUNAT.',
-        ], $cols);
+        // Documento interno (no fiscal): nota en recuadro.
+        // Configurable: solo se imprime si la empresa lo tiene activado
+        // (empresa.mostrar_glosa_interna). Por defecto 1 = se muestra.
+        if ((int)($emp['mostrar_glosa_interna'] ?? 1) === 1) {
+            $out .= ep_left();
+            $out .= ep_box([
+                'Documento interno de uso comercial.',
+                'No constituye comprobante de pago',
+                'electronico SUNAT.',
+            ], $cols);
+        }
     }
 
     // Avance y corte
