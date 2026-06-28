@@ -302,9 +302,17 @@ body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font
                 <span><?php echo $h($b['nombre']); ?></span>
                 <span class="amt"><?php echo $und($b['cantidad']); ?> und</span>
             </div>
-            <?php // Sub-desglose por presentación (solo si tiene más de una) ?>
-            <?php if (!empty($b['presentaciones']) && count($b['presentaciones']) > 1): ?>
-                <?php foreach ($b['presentaciones'] as $pr): ?>
+            <?php
+            // Sub-desglose por presentación. Se muestra si hay MÁS DE UNA, o si la
+            // única es una variante con NOMBRE REAL (Gordita, Personal, Vidrio...),
+            // para saber siempre cuál fue. Se omite solo el caso genérico "General"
+            // (productos sin variantes, ej. Agua Mineral), donde no aporta nada.
+            $prs = $b['presentaciones'] ?? [];
+            $mostrarDesglose = (count($prs) > 1)
+                || (count($prs) === 1 && $presNom($prs[0]['nombre']) !== 'General');
+            ?>
+            <?php if ($mostrarDesglose): ?>
+                <?php foreach ($prs as $pr): ?>
                 <div class="tbl-row" style="grid-template-columns:1fr 60px;border-bottom:0;padding-top:1px;padding-bottom:1px;">
                     <span style="padding-left:12px;color:#6b7280;font-size:10px;">↳ <?php echo $h($presNom($pr['nombre'])); ?></span>
                     <span class="amt" style="color:#6b7280;font-size:10px;"><?php echo $und($pr['cantidad']); ?> und</span>
