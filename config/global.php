@@ -14,7 +14,7 @@ define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_puertohabana_db")
 define("DB_HOST",     getenv('YAPEZ_DB_HOST')     ?: "localhost");
 define("DB_USERNAME", getenv('YAPEZ_DB_USERNAME') ?: "root");
 define("DB_PASSWORD", getenv('YAPEZ_DB_PASSWORD') ?: "");
-define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_puertohabana_db");
+define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_yapez_db");
 
 define("DB_ENCODE",   "utf8mb4");
 
