@@ -395,26 +395,49 @@ window.elegirVariante = async (idproducto, idprecio) => {
     await agregarProductoConPrecio(idproducto, idprecio);
 };
 
-async function agregarProductoConPrecio(idproducto, idprecio) {
-    // Si no hay orden activa, crearla
-    const esNuevaOrden = !state.orden || !state.orden.idorden;
-    if (esNuevaOrden) {
+// Candado de creacion: si llegan varios clics seguidos antes de que la orden exista,
+// todos esperan LA MISMA creacion en vez de crear una orden por clic.
+let creandoOrden = null;
+
+async function asegurarOrden() {
+    if (state.orden && state.orden.idorden) return state.orden;
+    if (creandoOrden) return creandoOrden;   // ya hay una creacion en vuelo: reutilizarla
+
+    creandoOrden = (async () => {
         const r = await API.ordenCrear({
             idmesa:   state.selectedMesa ? state.selectedMesa.idmesa : '',
             tipo:     state.type,
             mozo:     'Cajero',
             idsesion: state.sesion ? state.sesion.idsesion : ''
         });
-        if (!r.ok) { showToast('Error al crear orden', 'error'); return; }
-        state.orden = await API.ordenMostrar(r.idorden);
-        document.getElementById('order-id').textContent = 'Orden #' + state.orden.numero;
+        if (!r || !r.ok) { showToast((r && r.msg) || 'Error al crear orden', 'error'); return null; }
+        const o = await API.ordenMostrar(r.idorden);
+        if (!o || !o.idorden) { showToast('No se pudo cargar la orden', 'error'); return null; }
+        state.orden = o;
+        document.getElementById('order-id').textContent = 'Orden #' + o.numero;
         state.mesas = await API.mesas();
         renderMesas();
-        emitOrden('orden-creada', { idorden: r.idorden, idmesa: state.selectedMesa?.idmesa });
+        emitOrden('orden-creada', { idorden: o.idorden, idmesa: state.selectedMesa?.idmesa });
+        return o;
+    })();
+
+    try { return await creandoOrden; }
+    finally { creandoOrden = null; }
+}
+
+async function agregarProductoConPrecio(idproducto, idprecio) {
+    // Si no hay orden activa, crearla (una sola vez aunque haya varios clics)
+    let orden = state.orden;
+    if (!orden || !orden.idorden) {
+        orden = await asegurarOrden();
+        if (!orden) return;
     }
 
+    // Se usa el id capturado para que el item no pueda terminar en otra orden
+    // si el estado cambia mientras viaja la peticion.
+    const idordenDestino = orden.idorden;
     const payload = {
-        idorden:    state.orden.idorden,
+        idorden:    idordenDestino,
         idproducto: idproducto,
         cantidad:   1,
         nota:       ''
@@ -423,9 +446,9 @@ async function agregarProductoConPrecio(idproducto, idprecio) {
 
     const r = await Http.post('../ajax/orden.php?op=agregarItem', payload);
     if (r.ok) {
-        state.orden = await API.ordenMostrar(state.orden.idorden);
+        state.orden = await API.ordenMostrar(idordenDestino);
         renderOrden();
-        emitOrden('orden-actualizada', { idorden: state.orden.idorden, idmesa: state.selectedMesa?.idmesa });
+        emitOrden('orden-actualizada', { idorden: idordenDestino, idmesa: state.selectedMesa?.idmesa });
     } else if (r.agotado) {
         avisarSinStock('');
     } else if (r.msg) {

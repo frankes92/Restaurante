@@ -4,6 +4,21 @@ let dt = null;
 let dateFilter = 'all';   // all, hoy, semana, mes
 let payFilter  = '';      // efectivo, tarjeta, yape, transferencia
 let compFilter = '';      // ticket, nota_venta, boleta, factura
+let desdeFilter = '';     // YYYY-MM-DD
+let hastaFilter = '';     // YYYY-MM-DD
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// Clave/etiqueta de mes a partir de 'YYYY-MM-DD HH:MM:SS' (sin pasar por Date: evita desfases de zona horaria)
+function mesKey(v) {
+    const s = String(v || '');
+    return /^\d{4}-\d{2}/.test(s) ? s.slice(0, 7) : 'sin-fecha';
+}
+function mesLabel(key) {
+    if (key === 'sin-fecha') return 'Sin fecha de pago';
+    const [y, m] = key.split('-');
+    return `${MESES[Number(m) - 1] || m} ${y}`;
+}
 
 // Etiquetas y estilo del tipo de comprobante
 const COMP_LABELS = { ticket: 'Ticket', nota_venta: 'Nota Venta', boleta: 'Boleta', factura: 'Factura' };
@@ -47,6 +62,8 @@ function initDataTable() {
                 d.f_rango   = dateFilter === 'all' ? '' : dateFilter;
                 d.f_metodo  = payFilter;
                 d.f_comprobante = compFilter;
+                d.f_desde   = desdeFilter;
+                d.f_hasta   = hastaFilter;
             }
         },
         columns: [
@@ -95,8 +112,40 @@ function initDataTable() {
             { extend: 'pdfHtml5',   text: '<i class="fa-solid fa-file-pdf"></i> PDF', title: 'Historial', exportOptions: { columns: ':not(:last-child)' } },
             { extend: 'print',      text: '<i class="fa-solid fa-print"></i> Imprimir', exportOptions: { columns: ':not(:last-child)' } }
         ],
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' }
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json' },
+        drawCallback: function () { agruparPorMes(this.api()); }
     });
+}
+
+// Inserta una fila separadora por mes (solo cuando la tabla esta ordenada por fecha,
+// que es el orden por defecto: mes mas reciente primero)
+function agruparPorMes(api) {
+    const $body = $(api.table().body());
+    $body.find('tr.month-group-row').remove();
+
+    const ord = api.order();
+    if (!ord.length || Number(ord[0][0]) !== 1) return;
+
+    const cols = api.columns(':visible').count() || 9;
+    let key = null, $head = null, cant = 0, suma = 0;
+
+    const cerrar = () => {
+        if ($head) $head.find('.mg-meta').html(`${cant} comprobante${cant === 1 ? '' : 's'} · ${fmt.money(suma)}`);
+    };
+
+    api.rows({ page: 'current' }).every(function () {
+        const row = this.data();
+        const k = mesKey(row.fecha_pago);
+        if (k !== key) {
+            cerrar();
+            key = k; cant = 0; suma = 0;
+            $head = $(`<tr class="month-group-row"><td colspan="${cols}">${mesLabel(k)}<span class="mg-meta"></span></td></tr>`);
+            $(this.node()).before($head);
+        }
+        cant++;
+        suma += Number(row.total) || 0;
+    });
+    cerrar();
 }
 
 window.verDetalle = async (id) => {
@@ -140,11 +189,13 @@ window.exportCSV = () => {
 };
 
 // Filtros
-document.querySelectorAll('.filter-pill').forEach(b => b.addEventListener('click', () => {
+document.querySelectorAll('.filter-pill[data-filter], .filter-pill[data-pay], .filter-pill[data-comp]').forEach(b => b.addEventListener('click', () => {
     if (b.dataset.filter) {
         document.querySelectorAll('.filter-pill[data-filter]').forEach(x => x.classList.remove('active'));
         b.classList.add('active');
         dateFilter = b.dataset.filter;
+        // El rango rapido manda: se limpia el rango manual para no mezclar criterios
+        limpiarFechas(false);
     } else if (b.dataset.pay) {
         const wasActive = b.classList.contains('active');
         document.querySelectorAll('.filter-pill[data-pay]').forEach(x => x.classList.remove('active'));
@@ -158,7 +209,45 @@ document.querySelectorAll('.filter-pill').forEach(b => b.addEventListener('click
     if (dt) dt.ajax.reload();
 }));
 
+// Rango de fechas manual (desde / hasta)
+function limpiarFechas(recargar = true) {
+    desdeFilter = ''; hastaFilter = '';
+    const d = document.getElementById('f-desde');
+    const h = document.getElementById('f-hasta');
+    if (d) d.value = '';
+    if (h) h.value = '';
+    if (recargar && dt) dt.ajax.reload();
+}
+
+function aplicarFechas() {
+    const d = document.getElementById('f-desde');
+    const h = document.getElementById('f-hasta');
+    let desde = d ? d.value : '';
+    let hasta = h ? h.value : '';
+
+    // Si el usuario invierte el rango, lo corregimos en vez de devolver 0 resultados
+    if (desde && hasta && desde > hasta) {
+        const tmp = desde; desde = hasta; hasta = tmp;
+        if (d) d.value = desde;
+        if (h) h.value = hasta;
+    }
+    desdeFilter = desde;
+    hastaFilter = hasta;
+
+    // Un rango manual reemplaza al rango rapido (hoy / semana / mes)
+    if (desdeFilter || hastaFilter) {
+        dateFilter = 'all';
+        document.querySelectorAll('.filter-pill[data-filter]').forEach(x =>
+            x.classList.toggle('active', x.dataset.filter === 'all'));
+    }
+    if (dt) dt.ajax.reload();
+}
+
 $(function () {
     loadStats();
     initDataTable();
+
+    document.getElementById('f-desde')?.addEventListener('change', aplicarFechas);
+    document.getElementById('f-hasta')?.addEventListener('change', aplicarFechas);
+    document.getElementById('btn-limpiar-fechas')?.addEventListener('click', () => limpiarFechas(true));
 });

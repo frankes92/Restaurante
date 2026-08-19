@@ -363,29 +363,64 @@ window.mElegirVariante = async (idproducto, idprecio) => {
     await mAgregarConPrecio(idproducto, idprecio);
 };
 
-async function mAgregarConPrecio(idproducto, idprecio) {
-    const esNueva = !mState.orden || !mState.orden.idorden;
-    if (esNueva) {
+// Candado de creacion: mientras se esta creando la orden, cualquier otro toque espera
+// ESA misma creacion en vez de lanzar otra. Sin esto, dos toques seguidos (habitual en
+// celular por la latencia) creaban dos ordenes para la misma mesa y repartian los
+// productos entre ambas, dejando una en S/ 0.00.
+let mCreandoOrden = null;
+
+async function mAsegurarOrden() {
+    if (mState.orden && mState.orden.idorden) return mState.orden;
+    if (mCreandoOrden) return mCreandoOrden;   // ya hay una creacion en vuelo: reutilizarla
+
+    mCreandoOrden = (async () => {
         const r = await API.ordenCrear({
             idmesa:   mState.selectedMesa ? mState.selectedMesa.idmesa : '',
             tipo:     mState.type,
             mozo:     '',
             idsesion: mState.sesion ? mState.sesion.idsesion : ''
         });
-        if (!r.ok) { showToast('Error al crear orden', 'error'); return; }
-        mState.orden = await API.ordenMostrar(r.idorden);
+        if (!r || !r.ok) { showToast((r && r.msg) || 'Error al crear orden', 'error'); return null; }
+        const o = await API.ordenMostrar(r.idorden);
+        if (!o || !o.idorden) { showToast('No se pudo cargar la orden', 'error'); return null; }
+        mState.orden = o;
         mState.mesas = await API.mesas();
         mRenderMesas();
-        mEmit('orden-creada', { idorden: r.idorden, idmesa: mState.selectedMesa?.idmesa });
+        mEmit('orden-creada', { idorden: o.idorden, idmesa: mState.selectedMesa?.idmesa });
+        return o;
+    })();
+
+    try { return await mCreandoOrden; }
+    finally { mCreandoOrden = null; }
+}
+
+// Bloquea la grilla de productos mientras se crea la orden (evita el toque impaciente)
+function mBloquearProductos(bloquear) {
+    const grid = document.getElementById('m-prods-grid');
+    if (!grid) return;
+    grid.style.pointerEvents = bloquear ? 'none' : '';
+    grid.style.opacity       = bloquear ? '0.6' : '';
+}
+
+async function mAgregarConPrecio(idproducto, idprecio) {
+    let orden = mState.orden;
+    if (!orden || !orden.idorden) {
+        mBloquearProductos(true);
+        try { orden = await mAsegurarOrden(); }
+        finally { mBloquearProductos(false); }
+        if (!orden) return;
     }
 
-    const payload = { idorden: mState.orden.idorden, idproducto, cantidad: 1, nota: '' };
+    // Se usa el id capturado, no mState.orden, para que el item no pueda terminar
+    // en otra orden si el estado cambia mientras viaja la peticion.
+    const idordenDestino = orden.idorden;
+    const payload = { idorden: idordenDestino, idproducto, cantidad: 1, nota: '' };
     if (idprecio) payload.idprecio = idprecio;
     const r = await Http.post('../ajax/orden.php?op=agregarItem', payload);
     if (r.ok) {
-        mState.orden = await API.ordenMostrar(mState.orden.idorden);
+        mState.orden = await API.ordenMostrar(idordenDestino);
         mRenderTodo();
-        mEmit('orden-actualizada', { idorden: mState.orden.idorden, idmesa: mState.selectedMesa?.idmesa });
+        mEmit('orden-actualizada', { idorden: idordenDestino, idmesa: mState.selectedMesa?.idmesa });
         showToast('Agregado', 'success');
     } else if (r.agotado) {
         mAvisarAgotado('');

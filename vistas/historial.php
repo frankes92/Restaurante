@@ -17,6 +17,11 @@ require __DIR__ . '/template/head.php';
 .filter-pill { padding: 8px 16px; border-radius: 20px; background: var(--bg-white); border: 1px solid var(--border); cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-dark); display: flex; align-items: center; gap: 6px; font-family: inherit; }
 .filter-pill.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 .pay-icon { width: 30px; height: 30px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; }
+.filter-date { padding: 7px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-white); font-family: inherit; font-size: 12px; color: var(--text-dark); }
+.filter-date:focus { outline: none; border-color: var(--primary); }
+.filter-label { font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: .5px; align-self: center; }
+tr.month-group-row td { background: var(--primary-light); color: var(--primary); font-weight: 700; font-size: 12px; letter-spacing: .5px; text-transform: uppercase; padding: 10px 14px !important; border-top: 1px solid var(--border); }
+tr.month-group-row .mg-meta { float: right; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text-muted); }
 </style>
 <body>
 <div class="app">
@@ -68,6 +73,14 @@ require __DIR__ . '/template/head.php';
                 <button class="filter-pill" data-comp="nota_venta"><i class="fa-regular fa-file-lines"></i> Nota Venta</button>
                 <button class="filter-pill" data-comp="boleta"><i class="fa-regular fa-file"></i> Boleta</button>
                 <button class="filter-pill" data-comp="factura"><i class="fa-solid fa-file-invoice"></i> Factura</button>
+            </div>
+            <div class="filter-row">
+                <span class="filter-label">RANGO DE FECHAS:</span>
+                <label class="filter-label" style="font-weight:600;" for="f-desde">Desde</label>
+                <input type="date" id="f-desde" class="filter-date">
+                <label class="filter-label" style="font-weight:600;" for="f-hasta">Hasta</label>
+                <input type="date" id="f-hasta" class="filter-date">
+                <button class="filter-pill" id="btn-limpiar-fechas" type="button"><i class="fa-solid fa-eraser"></i> Limpiar</button>
             </div>
 
             <div class="table-container" style="padding:16px;">

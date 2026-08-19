@@ -90,6 +90,42 @@ switch ($op) {
 
     case 'crear':
         requirePermiso('nuevaorden');
+
+        // Idempotencia por mesa: si la mesa YA tiene una orden activa, se devuelve esa
+        // en lugar de crear una duplicada. Evita que dos peticiones casi simultaneas
+        // (doble tap en el celular, reintento por red lenta, dos dispositivos) generen
+        // dos ordenes para la misma mesa y repartan los productos entre ambas.
+        // Solo aplica a ordenes CON mesa: para llevar / delivery siguen siendo independientes.
+        if ($idmesa !== '' && $idmesa !== null) {
+            $activa = ejecutarConsultaSimpleFila(
+                "SELECT o.idorden, o.numero, o.idusuario,
+                        TRIM(CONCAT(COALESCE(u.nombre,''),' ',COALESCE(u.apellidos,''))) AS nombre
+                 FROM orden o LEFT JOIN usuario u ON u.idusuario = o.idusuario
+                 WHERE o.idmesa='" . (int)$idmesa . "'
+                   AND o.estado IN ('en_curso','enviada')
+                 ORDER BY o.idorden DESC LIMIT 1"
+            );
+            if ($activa) {
+                // Mozo: solo puede reutilizar la suya. Si es de otro, mismo aviso que ya
+                // usa el resto del modulo (no se crea nada).
+                $ownerId = (int)($activa['idusuario'] ?? 0);
+                if ($__esMozo && $ownerId !== 0 && $ownerId !== $__idusuario) {
+                    jsonResponse([
+                        'ok'  => false,
+                        'msg' => 'Esta mesa esta siendo atendida por ' . ($activa['nombre'] ?: 'otro mozo'),
+                        'cross_mozo' => true,
+                        'propietario_nombre' => $activa['nombre'],
+                    ]);
+                }
+                jsonResponse([
+                    'ok'         => true,
+                    'idorden'    => $activa['idorden'],
+                    'numero'     => $activa['numero'],
+                    'reutilizada'=> true,
+                ]);
+            }
+        }
+
         $r = $orden->crear($idmesa, $tipo, $mozo, $idsesion, $__idusuario);
         jsonResponse(['ok' => true, 'idorden' => $r['idorden'], 'numero' => $r['numero']]);
         break;

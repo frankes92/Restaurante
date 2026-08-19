@@ -10,12 +10,16 @@
 define("DB_USERNAME", getenv('YAPEZ_DB_USERNAME') ?: "jprqwdud_puertohabana");
 define("DB_PASSWORD", getenv('YAPEZ_DB_PASSWORD') ?: "ejLjG27QyzeFXJC");
 define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_puertohabana_db");*/
-
+/*
+define("DB_HOST",     getenv('YAPEZ_DB_HOST')     ?: "50.31.174.155");
+define("DB_USERNAME", getenv('YAPEZ_DB_USERNAME') ?: "jprqwdud_ripasoft");
+define("DB_PASSWORD", getenv('YAPEZ_DB_PASSWORD') ?: "(vQG0fW0^E?8(ttu");
+define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_yapez_db");
+*/
 define("DB_HOST",     getenv('YAPEZ_DB_HOST')     ?: "localhost");
 define("DB_USERNAME", getenv('YAPEZ_DB_USERNAME') ?: "root");
 define("DB_PASSWORD", getenv('YAPEZ_DB_PASSWORD') ?: "");
-define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_yapez_db");
-
+define("DB_NAME",     getenv('YAPEZ_DB_NAME')     ?: "jprqwdud_puertohabana_db");
 define("DB_ENCODE",   "utf8mb4");
 
 define("PRO_NOMBRE",  "PUERTO HABANA POS");
@@ -65,9 +69,14 @@ if (!defined('APP_SECRET_KEY')) {
 
 // Clave maestra para activar/extender licencia (solo el proveedor la conoce).
 // CAMBIAR antes de entregar el sistema al cliente.
-if (!defined('LICENSE_MASTER_KEY')) {
+/*if (!defined('LICENSE_MASTER_KEY')) {
     define("LICENSE_MASTER_KEY", getenv('YAPEZ_LICENSE_KEY') ?: 'RIPASOFT-LIC-MASTER-CHANGE-ME-2026');
+}*/
+
+if (!defined('LICENSE_MASTER_KEY')) {
+    define("LICENSE_MASTER_KEY", getenv('YAPEZ_LICENSE_KEY') ?: 'YAPEZ-LIC-MASTER-CHANGE-ME-2026');
 }
+
 
 // Modo de depuracion (mostrar errores). En produccion: false.
 if (!defined('APP_DEBUG')) {

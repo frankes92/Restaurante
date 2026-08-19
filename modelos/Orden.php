@@ -973,8 +973,9 @@ class Orden
         } elseif ($rangoFecha === 'mes') {
             $where .= " AND MONTH(o.fecha_pago)=MONTH(CURDATE()) AND YEAR(o.fecha_pago)=YEAR(CURDATE()) ";
         }
-        if ($desde !== '') $where .= " AND DATE(o.fecha_pago) >= '$desde' ";
-        if ($hasta !== '') $where .= " AND DATE(o.fecha_pago) <= '$hasta' ";
+        // Solo se aceptan fechas con formato YYYY-MM-DD
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $desde)) $where .= " AND DATE(o.fecha_pago) >= '$desde' ";
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $hasta)) $where .= " AND DATE(o.fecha_pago) <= '$hasta' ";
 
         if ($search !== '') {
             $s = $search;

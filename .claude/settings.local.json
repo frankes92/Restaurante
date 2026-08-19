@@ -6,7 +6,16 @@
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db -e \"UPDATE categoria SET icono='fa-glass-water' WHERE codigo='bebidas'; SELECT idcategoria, nombre, icono FROM categoria WHERE codigo='bebidas';\")",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db 2>&1)",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root yapez_db -e \"SELECT codigo, nombre, tipo, auto_cobro FROM whatsapp_plantilla; SHOW COLUMNS FROM cliente LIKE 'whatsapp'; SHOW COLUMNS FROM cliente LIKE 'fecha_nacimiento'; SELECT codigo FROM permiso WHERE grupo='whatsapp';\")",
-      "Bash(npx --yes expo export --platform android --output-dir /tmp/chk15)"
+      "Bash(npx --yes expo export --platform android --output-dir /tmp/chk15)",
+      "Bash(echo \"=== tamaño y tipo del dump del cliente ===\")",
+      "Bash(ls -lh /c/xampp/htdocs/restaurante/db/jprqwdud_yapez_db_24_07_2026.sql)",
+      "Bash(grep -oE \"\\\\`[a-z_]+\\\\`\")",
+      "Bash(echo \"=== primeras lineas del dump \\(para ver CREATE DATABASE / USE / charset\\) ===\")",
+      "Bash(head -25 /c/xampp/htdocs/restaurante/db/jprqwdud_yapez_db_24_07_2026.sql)",
+      "Read(//c/Users/ROY/AppData/Local/Temp/claude/c--xampp-htdocs-restaurante/6a2428de-c330-411a-8f21-0bfacb2f16c3/scratchpad/**)",
+      "Bash(/c/xampp/php/php.exe migrar.php)",
+      "Bash(/c/xampp/php/php.exe /c/Users/ROY/AppData/Local/Temp/claude/c--xampp-htdocs-restaurante/6a2428de-c330-411a-8f21-0bfacb2f16c3/scratchpad/gen_migracion.php)",
+      "Bash(/c/xampp/php/php.exe -r '$p=new PDO\\(\"mysql:host=127.0.0.1\",\"root\",\"\"\\);$r=\"jprqwdud_puertohabana_db\";$d=\"_mig_tmp\";function C\\($p,$db\\){return $p->query\\(\"SELECT CONCAT\\(table_name,\\\\\".\\\\\",column_name\\) FROM information_schema.columns WHERE table_schema=\".$p->quote\\($db\\)\\)->fetchAll\\(PDO::FETCH_COLUMN\\);}echo \\(\\($x=array_diff\\(C\\($p,$r\\),C\\($p,$d\\)\\)\\)?implode\\(\",\",$x\\):\"NINGUNA\"\\).\"\\\\n\";')"
     ]
   }
 }
